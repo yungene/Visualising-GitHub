@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+    <h1>D3 Server-side Demo</h1>
+    <%-
+      barChartHelper.getBarChart({
+        data: fixtureData,
+        width: 400,
+        height: 300,
+        xAxisLabel: '2012',
+        yAxisLabel: 'Views',
+        containerId: 'bar-chart-small'
+      })
+    %>
+    <hr>
+    <%-
+      barChartHelper.getBarChart({
+        data: fixtureData,
+        width: 800,
+        height: 600,
+        xAxisLabel: '2012',
+        yAxisLabel: 'Views',
+        containerId: 'bar-chart-large'
+      })
+    %>
+  </body>
+</html>
