@@ -22,7 +22,7 @@ var getBarChart = function (params) {
 
   var selector = params.containerId;
   var svg = d3.select(doc.getElementById(selector)).node().outerHTML;
-  d3.select(doc.getElementById(selector)).remove();
+  //d3.select(doc.getElementById(selector)).remove();
 
   return svg;
 

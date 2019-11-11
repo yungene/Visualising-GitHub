@@ -4,6 +4,11 @@
     <title><%= title %></title>
     <link rel='stylesheet' href='/stylesheets/style.css' />
   </head>
+  <p>Welcome to <%= repoName %>.</p>
+  <form action="/test/submit" method="post">
+  	<input type="text" name="repoName">
+  	<button type="submit">Get repo!</button>
+  </form>
   <body>
     <h1>D3 Server-side Demo</h1>
     <%-
@@ -18,14 +23,11 @@
     %>
     <hr>
     <%-
-      barChartHelper.getBarChart({
-        data: fixtureData,
-        width: 800,
-        height: 600,
-        xAxisLabel: '2012',
-        yAxisLabel: 'Views',
-        containerId: 'bar-chart-large'
-      })
+      sample.sample(csvString);
+    %>
+    <hr>
+    <%-
+      line.getLine(csvString);
     %>
   </body>
 </html>

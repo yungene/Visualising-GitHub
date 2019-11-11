@@ -74,8 +74,8 @@ var barChart = module.exports = function() {
       }
 
       xAxis = d3.axisBottom(xScale)
-        .tickSizeInner(0)
-        .tickSizeOuter(0);
+        .tickSizeInner(1)
+        .tickSizeOuter(1);
 
     }
 
