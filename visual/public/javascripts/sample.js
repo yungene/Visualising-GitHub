@@ -5,7 +5,6 @@ const d3nBar = require('d3node-barchart');
 
 
 var sample = function (csvString) {
-
   const data = d3.csvParse(csvString);
   return d3nBar({ data: data }).svgString();
 
