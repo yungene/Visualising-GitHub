@@ -1,6 +1,7 @@
 # Design Document for Visualising GitHub project
 
 Author: Jevgenijus Cistiakovas
+
 Last edit date: 2019-11-09
 
 ## Task
@@ -36,3 +37,9 @@ The metrics required:
 - Release information - https://developer.github.com/v3/repos/releases/ . In particular, commit marking the release.
 - Commit size - https://developer.github.com/v3/repos/statistics/#get-contributors-list-with-additions-deletions-and-commit-counts. https://developer.github.com/v3/repos/contents/#get-contents
 - Commit frequency. https://developer.github.com/v3/repos/statistics/#get-the-number-of-commits-per-hour-in-each-day
+
+### Active team size
+Active team size over some period T is defined as the number of users that have contributed (e.g. committed) at least N times over that period T. The only type of contribution considered initially will be commits. Comments and other contributions can be added with adjusting coefficients. As discussed, time frames between releases are considered. 
+Define active team size as follows:
+- An active team size at a day D is the number of people that have contibuted more than N times over the period T starting at D-T and ending at day D. To allow for comparison between repositories, choose T and N to be same for every repository. Choose T = a week, N = 3 commits.
+Algorithmically, keeping the last window of T days can be achieved by using a queue to allow for O(1) insert and removal. Given the number of contributors and number of commits is realtively low, ~O(10^3), calculation of team size can be done dynamically for each commit (as well as for each day). A sort of queue and dictionary table can be used to keep track of all the updates + all the values. A balanced tree can be used to keep a sorted queue of contributors to allow for efficient calculation of a team size.
