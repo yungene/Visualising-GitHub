@@ -25,3 +25,19 @@ CREATE TABLE IF NOT EXISTS repos_visited (
 	PRIMARY KEY (repo_name,repo_owner)
 );
 
+CREATE TABLE IF NOT EXISTS active_team_size_vs_time (
+	repo_name 			VARCHAR(255) NOT NULL,
+	repo_owner 			VARCHAR(255) NOT NULL,
+	date 				DATE 		 NOT NULL,
+	team_size 			INT UNSIGNED NOT NULL,
+	time_delta			INT 		 NOT NULL,
+	PRIMARY KEY (repo_name, repo_owner, date);
+);
+
+CREATE TABLE IF NOT EXISTS release_table (
+	repo_name 			VARCHAR(255) NOT NULL,
+	repo_owner 			VARCHAR(255) NOT NULL,
+	date 				DATE 		 NOT NULL,
+	release_name		VARCHAR(255) NOT NULL,
+	PRIMARY KEY (repo_name, repo_owner, date, release_name);
+);
