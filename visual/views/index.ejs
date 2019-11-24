@@ -11,23 +11,18 @@
   </form>
   <body>
     <h1>D3 Server-side Demo</h1>
+    <hr>
     <%-
-      barChartHelper.getBarChart({
-        data: fixtureData,
-        width: 400,
-        height: 300,
-        xAxisLabel: '2012',
-        yAxisLabel: 'Views',
-        containerId: 'bar-chart-small'
-      })
+      //sample.sample(csvString);
     %>
     <hr>
     <%-
-      sample.sample(csvString);
+      //line.getLine(csvString);
     %>
     <hr>
+    <h2>Date axis test</h2>
     <%-
-      line.getLine(csvString);
+      line.getDateLine(csvArr);
     %>
   </body>
 </html>
