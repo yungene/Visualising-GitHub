@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Queue;
 
 import org.eclipse.egit.github.core.Repository;
@@ -32,13 +33,10 @@ public class DataCollector {
 	Queue<Contributor> contributorsQueue;
 	Map<String, Integer> contributorsTable;
 	int teamSize;
-	// Prepared statements
-	PreparedStatement setTag;
-	PreparedStatement setTeamSizeVSTime;
 	// Configurations
 	int exponentialBackoffTime = 1;
 	int exponentialBackoffMultiplier = 2;
-	int exponentialBackoffLimit = (int) Math.pow(exponentialBackoffMultiplier, 8);
+	int exponentialBackoffLimit = (int) Math.pow(exponentialBackoffMultiplier, 3);
 	int timeInterval = 7; // days
 	int commitThreshold = 3; // commits
 	int daysToProcess = 400; // days to process
@@ -60,78 +58,97 @@ public class DataCollector {
 		this.client = client;
 		this.repo = repo;
 		this.repoOwner = repoOwner;
-		this.setTag = conn.prepareStatement(
-				String.format("INSERT IGNORE INTO release_table" + "VALUES(%s,%s,?,?);", repo, repoOwner));
-		this.setTeamSizeVSTime = conn
-				.prepareStatement(String.format("INSERT IGNORE INTO active_team_size_vs_time" + "VALUES(%s,%s,?,?,%d);",
-						repo, repoOwner, timeInterval));
-		System.out.printf("Created a new DataCollector for repo:%s by user:%s\n", repo,repoOwner);
+
+		System.out.printf("Created a new DataCollector for repo:%s by user:%s\n", repo, repoOwner);
 	}
 
 	/*
 	 * Process the repo provided and put all the results into the DB Use a big
 	 * single transaction to ensure atomicity
 	 */
-	public boolean process() {
+	public boolean process() throws InterruptedException {
 		// Start transaction
 		RepositoryService repoService = new RepositoryService(client);
 		CommitService commitService = new CommitService(client);
-		exponentialBackoffTime = 1;
-		while (exponentialBackoffTime < exponentialBackoffLimit) {
-			try {
-				processTags(repoService, commitService);
-				conn.commit();
-			} catch (SQLException | IOException ex) {
-				exponentialBackoffTime *= exponentialBackoffMultiplier;
+		try (PreparedStatement setTag = conn.prepareStatement(String.format(
+				"INSERT IGNORE INTO release_table (repo_name,repo_owner,date,release_name) VALUES ('%s','%s',?,?);",
+				repo, repoOwner));
+				PreparedStatement setTeamSizeVSTime = conn.prepareStatement(
+						String.format("INSERT IGNORE INTO active_team_size_vs_time VALUES ('%s','%s',?,?,%d);", repo,
+								repoOwner, timeInterval));
+				AutoCloseable finish = conn::rollback;) {
+
+			exponentialBackoffTime = 1;
+			while (exponentialBackoffTime < exponentialBackoffLimit) {
 				try {
-					if (conn != null)
-						conn.rollback();
-				} catch (SQLException e) {
-					System.err.println(e.getMessage());
+					processTags(repoService, commitService, setTag);
+					conn.commit();
+					break;
+				} catch (SQLException | IOException ex) {
+					System.out.printf("Executing tag backoff for repo:%s by user:%s\n", repo, repoOwner);
+					Thread.sleep(1000 * exponentialBackoffTime);
+					exponentialBackoffTime *= exponentialBackoffMultiplier;
+					ex.printStackTrace();
+					try {
+						if (conn != null)
+							conn.rollback();
+					} catch (SQLException e) {
+						System.err.println(e.getMessage());
+					}
 				}
 			}
-		}
-		if(exponentialBackoffTime >= exponentialBackoffLimit) {
-			return false;
-		}
-		exponentialBackoffTime = 1;
-		while (exponentialBackoffTime < exponentialBackoffLimit) {
-			try {
-				processCommits(repoService, commitService);
-				conn.commit();
-			} catch (SQLException | IOException ex) {
-				exponentialBackoffTime *= exponentialBackoffMultiplier;
+			if (exponentialBackoffTime >= exponentialBackoffLimit) {
+				return false;
+			}
+			exponentialBackoffTime = 1;
+			while (exponentialBackoffTime < exponentialBackoffLimit) {
 				try {
-					if (conn != null)
-						conn.rollback();
-				} catch (SQLException e) {
-					System.err.println(e.getMessage());
+					processCommits(repoService, commitService, setTeamSizeVSTime);
+					conn.commit();
+					break;
+				} catch (SQLException | IOException ex) {
+					System.out.printf("Executing commit backoff for repo:%s by user:%s\n", repo, repoOwner);
+					Thread.sleep(1000 * exponentialBackoffTime);
+					exponentialBackoffTime *= exponentialBackoffMultiplier;
+					ex.printStackTrace();
+					try {
+						if (conn != null)
+							conn.rollback();
+					} catch (SQLException e) {
+						System.err.println(e.getMessage());
+					}
 				}
 			}
-		}
-		if(exponentialBackoffTime >= exponentialBackoffLimit) {
-			return false;
+			if (exponentialBackoffTime >= exponentialBackoffLimit) {
+				return false;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		// End transaction
 		return true;
 	}
 
-	private boolean processTags(RepositoryService repoService, CommitService commitService)
+	private boolean processTags(RepositoryService repoService, CommitService commitService, PreparedStatement setTag)
 			throws IOException, SQLException {
 		Repository repoObj = repoService.getRepository(repoOwner, repo);
 		List<RepositoryTag> repoTags = repoService.getTags(repoObj);
 		for (RepositoryTag tag : repoTags) {
-			setTag.setString(2, tag.getName());
+			String tagName = tag.getName();
 			TypedResource commit = tag.getCommit();
 			RepositoryCommit commitObj = commitService.getCommit(repoObj, commit.getSha());
-			setTag.setDate(1, new java.sql.Date(commitObj.getAuthor().getCreatedAt().getTime()));
-			setTag.execute();
+			java.util.Date date = commitObj.getCommit().getAuthor().getDate();
+			setTag.setDate(1, new java.sql.Date(date.getTime()));
+			setTag.setString(2, tagName);
+			System.out.println(setTag.toString());
+			setTag.executeUpdate();
+			System.out.printf("Insert tag, date:%s by name:%s\n", date.toGMTString(), tagName);
 		}
 		return true;
 	}
 
-	private boolean processCommits(RepositoryService repoService, CommitService commitService)
-			throws IOException, SQLException {
+	private boolean processCommits(RepositoryService repoService, CommitService commitService,
+			PreparedStatement setTeamSizeVSTime) throws IOException, SQLException, InterruptedException {
 		// Set up attributes - data structures
 		contributorsQueue = new LinkedList<>();
 		contributorsTable = new HashMap<>();
@@ -139,28 +156,47 @@ public class DataCollector {
 
 		// Assuming commits are returned in a chronological order with most recent first
 		Calendar calendar = Calendar.getInstance();
+		java.util.Date last_date = calendar.getTime();
 		calendar.add(Calendar.DATE, -1 * daysToProcess);
 		java.util.Date limit = calendar.getTime();
 		Repository repoObj = repoService.getRepository(repoOwner, repo);
 		PageIterator<RepositoryCommit> commitPageIter = commitService.pageCommits(repoObj);
 		outer_wh_1: while (true) {
-			Collection<RepositoryCommit> commits = commitPageIter.next();
-			for (RepositoryCommit commit : commits) {
-				java.util.Date commitDate = commit.getCommit().getAuthor().getDate();
-				if (commitDate.compareTo(limit) < 0) {
-					break outer_wh_1;
+			try {
+				Thread.sleep(100 * exponentialBackoffTime);
+				Collection<RepositoryCommit> commits = commitPageIter.next();
+				for (RepositoryCommit commit : commits) {
+					java.util.Date commitDate = commit.getCommit().getAuthor().getDate();
+					if (commitDate.compareTo(limit) < 0) {
+						break outer_wh_1;
+					}
+					System.out.println("Commit date: " + commitDate);
+					while (last_date.compareTo(commitDate) > 0) {
+						System.out.println("Last date : " + last_date);
+						pruneContributors(last_date);
+						updateTeamSize();
+						setTeamSizeVSTime.setDate(1, new java.sql.Date(addDates(last_date, timeInterval).getTime()));
+						setTeamSizeVSTime.setInt(2, teamSize);
+						setTeamSizeVSTime.executeUpdate();
+						System.out.printf("Insert tag, date:%s by team size:%s\n", addDates(last_date, timeInterval), teamSize);
+						last_date = addDates(last_date, -1);
+					}
+					
+					String authorName = commit.getAuthor().getLogin();
+					if (!contributorsTable.containsKey(authorName)) {
+						contributorsTable.put(authorName, 0);
+					}
+					contributorsTable.put(authorName, contributorsTable.get(authorName) + 1);
+					contributorsQueue.add(new Contributor(commitDate, authorName));
+//						pruneContributors(commitDate);
+//						updateTeamSize();
+//						setTeamSizeVSTime.setDate(1, new java.sql.Date(commitDate.getTime()));
+//						setTeamSizeVSTime.setInt(2, teamSize);
+//						setTeamSizeVSTime.executeUpdate();
+//						System.out.printf("Insert tag, date:%s by team size:%s\n", addDates(commitDate, daysToProcess), teamSize);
 				}
-				String authorName = commit.getAuthor().getLogin();
-				if (!contributorsTable.containsKey(authorName)) {
-					contributorsTable.put(authorName, 0);
-				}
-				contributorsTable.put(authorName, contributorsTable.get(authorName) + 1);
-				contributorsQueue.add(new Contributor(commitDate, authorName));
-
-				pruneContributors(commitDate);
-				updateTeamSize();
-				setTeamSizeVSTime.setDate(1, new java.sql.Date(commitDate.getTime()));
-				setTeamSizeVSTime.setInt(2, teamSize);
+			} catch (NoSuchElementException e) {
+				break outer_wh_1;
 			}
 		}
 		return true;
@@ -170,7 +206,7 @@ public class DataCollector {
 		while (!contributorsQueue.isEmpty()) {
 			Contributor contributor = contributorsQueue.peek();
 			// assuming sorted order
-			if (contributor.date.compareTo(addDates(latestDate, daysToProcess)) <= 0) {
+			if (contributor.date.compareTo(addDates(latestDate, timeInterval)) <= 0) {
 				break;
 			}
 			contributorsQueue.poll();
@@ -196,31 +232,7 @@ public class DataCollector {
 	}
 
 	public static void main(String[] args) {
-
-		// "tetris+language:assembly&sort=stars&order=desc"
-
-		// GitHubClient client = new GitHubClient().setOAuth2Token(readToken());
-		// RepositoryService service = new RepositoryService(client);
-//		try {
-//			for (Repository repo : service.getRepositories("yungene")) {
-//				if(!repo.getOwner().getLogin().equals("yungene")) {
-//					continue;
-//				}
-//				System.out.println(repo.getName() + " Watchers: " + repo.getWatchers());
-//				//Repository repo = service.getRepository("yungene", "OnlineJudges");
-//				CommitService commServ = new CommitService(client);
-//				 PageIterator<RepositoryCommit> pageIter = commServ.pageCommits(repo);
-//				 Collection<RepositoryCommit> coll = pageIter.next();
-//				 for(RepositoryCommit commit: coll) {
-//					 RepositoryCommit commitFull = new CommitService(client).getCommit(repo, commit.getSha());
-//					 if(commitFull.getStats()!= null) {
-//					 System.out.println("Total is " + commitFull.getStats().getTotal());
-//					 }
-//				 }
-//			}
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
+		System.out.println("Not implemented!!");
 	}
 
 	// private void readInTop

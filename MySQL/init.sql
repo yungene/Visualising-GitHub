@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS active_team_size_vs_time (
 	date 				DATE 		 NOT NULL,
 	team_size 			INT UNSIGNED NOT NULL,
 	time_delta			INT 		 NOT NULL,
-	PRIMARY KEY (repo_name, repo_owner, date);
+	PRIMARY KEY (repo_name, repo_owner, date)
 );
 
 CREATE TABLE IF NOT EXISTS release_table (
@@ -39,5 +39,5 @@ CREATE TABLE IF NOT EXISTS release_table (
 	repo_owner 			VARCHAR(255) NOT NULL,
 	date 				DATE 		 NOT NULL,
 	release_name		VARCHAR(255) NOT NULL,
-	PRIMARY KEY (repo_name, repo_owner, date, release_name);
+	PRIMARY KEY (repo_name, repo_owner, date, release_name)
 );
