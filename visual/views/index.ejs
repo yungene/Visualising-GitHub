@@ -13,8 +13,8 @@
   //line.getDateLine(csvArr);
   %>
   <div id="container">
-  <h2>Line Chart</h2>
-  <div id="chart"></div>
+    <h2>Line Chart</h2>
+    <div id="chart"></div>
   </div>
   <script src="https://d3js.org/d3.v5.min.js" charset="utf-8"></script>
   <script type="text/javascript">
@@ -24,13 +24,13 @@
       var dateDataCSV = <%- JSON.stringify(dateDataFromNode) %>;
 
       const data = d3.csvParse(dataCSV,function(d) {
-    return {
+        return {
       key: new Date(d.key), // lowercase and convert "Year" to Date
       value: +d.value // lowercase and convert "Length" to number
     };
   });
-  const dateData = d3.csvParse(dateDataCSV,function(d) {
-    return {
+      const dateData = d3.csvParse(dateDataCSV,function(d) {
+        return {
       key: new Date(d.key), // lowercase and convert "Year" to Date
       value: d.value // lowercase and convert "Length" to number
     };
@@ -82,6 +82,15 @@
                         //console.log("y is " + y + " value is " + d.value);
                         return y; });
 
+      const areaChart = d3.area()
+      .x(function (d) { var x = xScale(d.key);
+                        //console.log("x is " + x + " key is " + d.key);
+                        return x; })
+      .y0(height)
+      .y1(function (d) { var y = yScale(d.value);
+                        //console.log("y is " + y + " value is " + d.value);
+                        return y; });
+
       if (_isCurve) lineChart.curve(d3.curveBasis);
 
       g.append('g')
@@ -96,8 +105,9 @@
       .selectAll('path')
       .data(allKeys ? data : [data])
       .enter().append("path")
+      .attr("fill", "#cce5df")
       .attr('stroke', (d, i) => i < _lineColors.length ? _lineColors[i] : _lineColor)
-      .attr('d', lineChart);
+      .attr('d', areaChart);
 
       for(var i = 0; i < dateData.length; i++){
         console.log(dateData[i].key);
@@ -108,32 +118,32 @@
       .attr("x2", xScale(dateData[i].key))  //<<== and here
       .attr("y2", height)
       .style("stroke-width", 1)
-      .style("stroke", "red")
+      .style("stroke", "palevioletred")
       .style("fill", "none");
 
-      svg
-      .append("text")
-      .style("text-anchor", "start")
-      .style("font-size", "11px") 
-      .text(dateData[i].value)
-      .attr('transform', (d,j)=>{
-        var y = 0 - (_margin.top/3);
-        var x =  xScale(dateData[i].key);
-        return 'translate( '+x+' , '
-        +y+'),'+ 'rotate(90)';})
-      .attr("x",0)
-      .attr("y", 0);
+      // svg
+      // .append("text")
+      // .style("text-anchor", "start")
+      // .style("font-size", "11px") 
+      // .text(dateData[i].value)
+      // .attr('transform', (d,j)=>{
+      //   var y = 0 - (_margin.top/3);
+      //   var x =  xScale(dateData[i].key);
+      //   return 'translate( '+x+' , '
+      //   +y+'),'+ 'rotate(90)';})
+      // .attr("x",0)
+      // .attr("y", 0);
     }
 
   // Add labels
   svg.append("text")      // text label for the x-axis
   .attr("x", width / 2 )
-  .attr("y",  height + _margin.bottom/2)
+  .attr("y",  height + 10+_margin.bottom/2)
   .style("text-anchor", "middle")
   .text("Date");
 
   svg.append("text")      // text label for the y-axis
-  .attr("y",30 - _margin.left)
+  .attr("y",20 - _margin.left)
   .attr("x",50 - (height / 2))
   .attr("transform", "rotate(-90)")
   .style("text-anchor", "end")
@@ -148,39 +158,46 @@
   .style("text-decoration", "underline") 
   .text("Active team size vs Time (2 commits in last 30 days threshold)");
 
-    var bisect = d3.bisector(function(d) { return d.key; }).left;
+  var bisect = d3.bisector(function(d) { return d.key; }).left;
 
   // Create the circle that travels along the curve of chart
   var focus = svg
-    .append('g')
-    .append('circle')
-      .style("fill", "none")
-      .attr("stroke", "black")
-      .attr('r', 8.5)
-      .style("opacity", 0)
-
+  .append('g')
+  .append('circle')
+  .style("fill", "none")
+  .attr("stroke", "black")
+  .attr('r', 8.5)
+  .style("opacity", 0);
   // Create the text that travels along the curve of chart
   var focusText = svg
-    .append('g')
-    .append('text')
-      .style("opacity", 0)
-      .attr("text-anchor", "left")
-      .attr("alignment-baseline", "middle")
+  .append('g')
+  .append('text')
+  .style("opacity", 0)
+  .attr("text-anchor", "left")
+  .attr("alignment-baseline", "middle");
+
+  var focusRelease = svg
+  .append('g')
+  .append('text')
+  .style("opacity", 0)
+  .attr("text-anchor", "left")
+  .attr("alignment-baseline", "middle");
 
   // Create a rect on top of the svg area: this rectangle recovers mouse position
   svg
-    .append('rect')
-    .style("fill", "none")
-    .style("pointer-events", "all")
-    .attr('width', width)
-    .attr('height', height)
-    .on('mouseover', mouseover)
-    .on('mousemove', mousemove)
-    .on('mouseout', mouseout);
+  .append('rect')
+  .style("fill", "none")
+  .style("pointer-events", "all")
+  .attr('width', width)
+  .attr('height', height)
+  .on('mouseover', mouseover)
+  .on('mousemove', mousemove)
+  .on('mouseout', mouseout);
   // What happens when the mouse move -> show the annotations at the right positions.
   function mouseover() {
-    focus.style("opacity", 1)
-    focusText.style("opacity",1)
+    focus.style("opacity", 1);
+    focusText.style("opacity",1);
+    focusRelease.style("opacity",1);
   }
 
   function mousemove() {
@@ -188,17 +205,26 @@
     var x0 = xScale.invert(d3.mouse(this)[0]);
     var i = bisect(data, x0, 1);
     selectedData = data[i]
+    var x02 = xScale.invert(d3.mouse(this)[0]);
+    var i2 = bisect(dateData, x02,0);
+    selectedData2 = dateData[i2];
     focus
-      .attr("cx", xScale(selectedData.key))
-      .attr("cy", yScale(selectedData.value))
+    .attr("cx", xScale(selectedData.key))
+    .attr("cy", yScale(selectedData.value));
     focusText
-      .html("x:" + selectedData.key.toDateString() + "  -  " + "y:" + selectedData.value)
-      .attr("x", xScale(selectedData.key)+15)
-      .attr("y", yScale(selectedData.value))
-    }
+    .html("x:" + selectedData.key.toDateString() + "  -  " + "y:" + selectedData.value)
+    .attr("x", xScale(selectedData.key)+15)
+    .attr("y", yScale(selectedData.value));
+    focusRelease
+      .html( selectedData2.value)
+      .attr("x", xScale(selectedData2.key))
+      .attr("y", -5);
+  }
   function mouseout() {
     focus.style("opacity", 0)
-    focusText.style("opacity", 0)
+    focusText.style("opacity", 0);
+        focusRelease.style("opacity",0);
+
   }
 });
 </script>
