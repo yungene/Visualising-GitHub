@@ -37,8 +37,8 @@ public class DataCollector {
 	int exponentialBackoffTime = 1;
 	int exponentialBackoffMultiplier = 2;
 	int exponentialBackoffLimit = (int) Math.pow(exponentialBackoffMultiplier, 3);
-	int timeInterval = 7; // days
-	int commitThreshold = 3; // commits
+	int timeInterval = 30; // days
+	int commitThreshold = 2; // commits
 	int daysToProcess = 400; // days to process
 
 	static class Contributor {
@@ -133,11 +133,18 @@ public class DataCollector {
 			throws IOException, SQLException {
 		Repository repoObj = repoService.getRepository(repoOwner, repo);
 		List<RepositoryTag> repoTags = repoService.getTags(repoObj);
+		Calendar calendar = Calendar.getInstance();
+		calendar.add(Calendar.DATE, -1 * daysToProcess);
+		java.util.Date limit = calendar.getTime();
 		for (RepositoryTag tag : repoTags) {
 			String tagName = tag.getName();
 			TypedResource commit = tag.getCommit();
 			RepositoryCommit commitObj = commitService.getCommit(repoObj, commit.getSha());
-			java.util.Date date = commitObj.getCommit().getAuthor().getDate();
+			java.util.Date date = commitObj.getCommit().getCommitter().getDate();
+			if (date.compareTo(limit) < 0) {
+				System.out.printf("skip tag, date:%s by name:%s\n", date.toGMTString(), tagName);
+				continue;
+			}
 			setTag.setDate(1, new java.sql.Date(date.getTime()));
 			setTag.setString(2, tagName);
 			System.out.println(setTag.toString());
@@ -156,6 +163,7 @@ public class DataCollector {
 
 		// Assuming commits are returned in a chronological order with most recent first
 		Calendar calendar = Calendar.getInstance();
+		java.util.Date today = calendar.getTime();
 		java.util.Date last_date = calendar.getTime();
 		calendar.add(Calendar.DATE, -1 * daysToProcess);
 		java.util.Date limit = calendar.getTime();
@@ -166,8 +174,10 @@ public class DataCollector {
 				Thread.sleep(100 * exponentialBackoffTime);
 				Collection<RepositoryCommit> commits = commitPageIter.next();
 				for (RepositoryCommit commit : commits) {
-					java.util.Date commitDate = commit.getCommit().getAuthor().getDate();
-					if (commitDate.compareTo(limit) < 0) {
+					java.util.Date commitDate = commit.getCommit().getCommitter().getDate();
+					System.out.println("Commit date: " + commitDate);
+					if (addDates(commitDate, timeInterval).compareTo(limit) < 0) {
+						System.out.printf("Stopped for date:%s by limit:%s\n", commitDate, limit);
 						break outer_wh_1;
 					}
 					System.out.println("Commit date: " + commitDate);
@@ -175,14 +185,29 @@ public class DataCollector {
 						System.out.println("Last date : " + last_date);
 						pruneContributors(last_date);
 						updateTeamSize();
-						setTeamSizeVSTime.setDate(1, new java.sql.Date(addDates(last_date, timeInterval).getTime()));
-						setTeamSizeVSTime.setInt(2, teamSize);
-						setTeamSizeVSTime.executeUpdate();
-						System.out.printf("Insert tag, date:%s by team size:%s\n", addDates(last_date, timeInterval), teamSize);
-						last_date = addDates(last_date, -1);
+						if (addDates(last_date, timeInterval).compareTo(today) <= 0) {
+							setTeamSizeVSTime.setDate(1,
+									new java.sql.Date(addDates(last_date, timeInterval).getTime()));
+							setTeamSizeVSTime.setInt(2, teamSize);
+							setTeamSizeVSTime.executeUpdate();
+							System.out.printf("Insert team size, date:%s by team size:%s\n",
+									addDates(last_date, timeInterval), teamSize);
+							last_date = addDates(last_date, -1);
+						}
 					}
-					
-					String authorName = commit.getAuthor().getLogin();
+
+					String authorName = "unnamed";
+					try {
+						authorName = commit.getAuthor().getLogin();
+						if (authorName == null) {
+							authorName = commit.getCommitter().getLogin();
+						}
+						if (authorName == null) {
+							authorName = "unnamed";
+						}
+					} catch (NullPointerException e) {
+						e.printStackTrace();
+					}
 					if (!contributorsTable.containsKey(authorName)) {
 						contributorsTable.put(authorName, 0);
 					}
@@ -196,6 +221,8 @@ public class DataCollector {
 //						System.out.printf("Insert tag, date:%s by team size:%s\n", addDates(commitDate, daysToProcess), teamSize);
 				}
 			} catch (NoSuchElementException e) {
+				System.out.printf("Stopped for error  limit:%s\n", limit);
+				e.printStackTrace();
 				break outer_wh_1;
 			}
 		}
@@ -205,7 +232,7 @@ public class DataCollector {
 	private void pruneContributors(java.util.Date latestDate) {
 		while (!contributorsQueue.isEmpty()) {
 			Contributor contributor = contributorsQueue.peek();
-			// assuming sorted order
+			// assuming sorted order, which it is
 			if (contributor.date.compareTo(addDates(latestDate, timeInterval)) <= 0) {
 				break;
 			}

@@ -54,9 +54,10 @@ public class Main {
 
 	// TODO: implement proper function. It is dummy for now
 	private static String[][] getRepos(Connection conn) {
-		String[][] result = new String[1][2];
-		result[0][1] = "yungene";
-		result[0][0] = "CS3012-SWENG";
+		String[][] result = {{"CS3012-SWENG","yungene"},{"jquery","jquery"},
+				{"jax","google"},
+				{"filament","google"}};
+
 		return result;
 	}
 
