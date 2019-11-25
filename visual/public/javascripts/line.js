@@ -25,12 +25,20 @@ var getDateLine = function (csvArr) {
 	    value: +d.value // lowercase and convert "Length" to number
 	  };
 	});
-	console.log(dataDateVSSize);
+	const dataDateVSRelease = d3.csvParse(csvArr[1],function(d) {
+	  return {
+	    key: new Date(d.key), // lowercase and convert "Year" to Date
+	    value: d.value // lowercase and convert "Length" to number
+	  };
+	});
+	//console.log(dataDateVSSize);
+	console.log(dataDateVSRelease);
 	return d3nDateLine({ data: dataDateVSSize,
-		isCurve: false,
+		dateData: dataDateVSRelease,
+		isCurve: true,
 		width: 1200,
 		height: 700,
-		margin: { top: 20, right: 40, bottom: 60, left: 60 }}).svgString();
+		margin: { top: 80, right: 40, bottom: 60, left: 60 }}).svgString();
 
 };
 

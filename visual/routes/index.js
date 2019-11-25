@@ -14,10 +14,10 @@ const path = require("path");
 const csvString = fs.readFileSync(path.resolve(__dirname,'../public/sample_data/data.csv')).toString();
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  readTeamSizePoints("CS3012-SWENG","yungene", function (csvArr){
+  readTeamSizePoints("filament","google", function (csvArr){
   console.log("Read DB success\n")
-  console.log("CSVARR")
-  console.log(csvArr);
+  //console.log("CSVARR")
+  //console.log(csvArr);
   res.render('index', { title: 'Express',
     fixtureData: fixtureData, 
     barChartHelper: barChartHelper,
@@ -122,7 +122,7 @@ function readTeamSizePoints( stringRepoName, stringRepoOwner, callBackFun){
 
      for (var i = 0; i < result2.length; i++) {
        var row = result2[i];
-       stringCSV1 = stringCSV1.concat("{0},{1}\n".format(row.date,row.release_name));
+       stringCSV2 = stringCSV2.concat("{0},{1}\n".format(row.date,row.release_name));
      };
 
      callBackFun( [stringCSV1,stringCSV2]);
