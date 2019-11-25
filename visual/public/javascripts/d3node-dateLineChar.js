@@ -87,24 +87,6 @@ function dateLine({
     .attr('stroke', (d, i) => i < _lineColors.length ? _lineColors[i] : _lineColor)
     .attr('d', lineChart);
 
-// Draw a date line for Release test
-var today = new Date();
-// svg.
-// selectAll("line")
-// .data(dateData)
-// .enter()
-// .append("line")
-// .attr("x1",function (d,i) {
-//   console.log("d.key is " + d.key);
-//   return d.key; })
-//   //<<== change your code here
-//   .attr("y1", 0)
-//     .attr("x2", (d,i) => xScale(d.key))  //<<== and here
-//     .attr("y2", height)
-//     .style("stroke-width", 2)
-//     .style("stroke", "red")
-//     .style("fill", "none");
-
     for(var i = 0; i < dateData.length; i++){
       console.log(dateData[i].key);
       svg

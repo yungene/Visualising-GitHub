@@ -1,28 +1,206 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title><%= title %></title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
-  </head>
-  <p>Welcome to <%= repoName %>.</p>
-  <form action="/test/submit" method="post">
-  	<input type="text" name="repoName">
-  	<button type="submit">Get repo!</button>
-  </form>
-  <body>
-    <h1>D3 Server-side Demo</h1>
-    <hr>
-    <%-
-      //sample.sample(csvString);
-    %>
-    <hr>
-    <%-
-      //line.getLine(csvString);
-    %>
-    <hr>
-    <h2>Date axis test</h2>
-    <%-
-      line.getDateLine(csvArr);
-    %>
-  </body>
+<head>
+  <title><%= title %></title>
+  <link rel='stylesheet' href='/stylesheets/style.css' />
+  
+</head>
+
+<body>
+  <h1>D3 Server-side Demo</h1>
+  <h2>Date axis test</h2>
+  <%-
+  //line.getDateLine(csvArr);
+  %>
+  <div id="container">
+  <h2>Line Chart</h2>
+  <div id="chart"></div>
+  </div>
+  <script src="https://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+  <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function(e) {
+      //vars
+      var dataCSV = <%- JSON.stringify(dataFromNode) %>;
+      var dateDataCSV = <%- JSON.stringify(dateDataFromNode) %>;
+
+      const data = d3.csvParse(dataCSV,function(d) {
+    return {
+      key: new Date(d.key), // lowercase and convert "Year" to Date
+      value: +d.value // lowercase and convert "Length" to number
+    };
+  });
+  const dateData = d3.csvParse(dateDataCSV,function(d) {
+    return {
+      key: new Date(d.key), // lowercase and convert "Year" to Date
+      value: d.value // lowercase and convert "Length" to number
+    };
+  });
+      var _margin = { top: 80, right: 40, bottom: 60, left: 60 };
+      var _width = 1200;
+      var _height = 800;
+      var _lineWidth = 1.5;
+      var _lineColor = 'steelblue';
+      var _lineColors = ['steelblue'];
+      var _isCurve = true;
+      var _tickSize = 5;
+      var _tickPadding = 5;
+      //const d3 = d3n.d3;
+
+      const width = _width - _margin.left - _margin.right;
+      const height = _height - _margin.top - _margin.bottom;
+
+      const svg1 = d3.select("body").select("#chart").append("svg")
+      .attr("width", _width)
+      .attr("height", _height);
+      const svg = svg1
+      .append('g')
+      .attr('transform', `translate(${_margin.left}, ${_margin.top})`);
+
+      const g = svg.append('g');
+
+      const { allKeys } = data;
+      console.log("Extent function on " + {allKeys});
+      const xScale = d3.scaleTime()
+      .domain(allKeys ? d3.extent(allKeys) : d3.extent(data, d => d.key))
+      .range([0, width]);
+      const yScale = d3.scaleLinear()
+      .domain(allKeys ? [d3.min(data, d => d3.min(d, v => v.value)), d3.max(data, d => d3.max(d, v => v.value))] : d3.extent(data, d => d.value))
+      .rangeRound([height, 0]);
+      const xAxis = d3.axisBottom(xScale)
+      .tickSize(_tickSize)
+      .tickFormat(d3.timeFormat("%y-%m-%d"))
+      .tickPadding(_tickPadding);
+      const yAxis = d3.axisLeft(yScale)
+      .tickSize(_tickSize)
+      .tickPadding(_tickPadding);
+
+      const lineChart = d3.line()
+      .x(function (d) { var x = xScale(d.key);
+                        //console.log("x is " + x + " key is " + d.key);
+                        return x; })
+      .y(function (d) { var y = yScale(d.value);
+                        //console.log("y is " + y + " value is " + d.value);
+                        return y; });
+
+      if (_isCurve) lineChart.curve(d3.curveBasis);
+
+      g.append('g')
+      .attr('transform', `translate(0, ${height})`)
+      .call(xAxis);
+
+      g.append('g').call(yAxis);
+
+      g.append('g')
+      .attr('fill', 'none')
+      .attr('stroke-width', _lineWidth)
+      .selectAll('path')
+      .data(allKeys ? data : [data])
+      .enter().append("path")
+      .attr('stroke', (d, i) => i < _lineColors.length ? _lineColors[i] : _lineColor)
+      .attr('d', lineChart);
+
+      for(var i = 0; i < dateData.length; i++){
+        console.log(dateData[i].key);
+        svg
+        .append("line")
+        .attr("x1",xScale(dateData[i].key))
+        .attr("y1", 0)
+      .attr("x2", xScale(dateData[i].key))  //<<== and here
+      .attr("y2", height)
+      .style("stroke-width", 1)
+      .style("stroke", "red")
+      .style("fill", "none");
+
+      svg
+      .append("text")
+      .style("text-anchor", "start")
+      .style("font-size", "11px") 
+      .text(dateData[i].value)
+      .attr('transform', (d,j)=>{
+        var y = 0 - (_margin.top/3);
+        var x =  xScale(dateData[i].key);
+        return 'translate( '+x+' , '
+        +y+'),'+ 'rotate(90)';})
+      .attr("x",0)
+      .attr("y", 0);
+    }
+
+  // Add labels
+  svg.append("text")      // text label for the x-axis
+  .attr("x", width / 2 )
+  .attr("y",  height + _margin.bottom/2)
+  .style("text-anchor", "middle")
+  .text("Date");
+
+  svg.append("text")      // text label for the y-axis
+  .attr("y",30 - _margin.left)
+  .attr("x",50 - (height / 2))
+  .attr("transform", "rotate(-90)")
+  .style("text-anchor", "end")
+  .style("font-size", "16px")
+  .text("Active team size");
+
+  svg.append("text")      // text label for chart Title
+  .attr("x", width / 2 )
+  .attr("y", 0 - (_margin.top/2))
+  .style("text-anchor", "middle")
+  .style("font-size", "16px") 
+  .style("text-decoration", "underline") 
+  .text("Active team size vs Time (2 commits in last 30 days threshold)");
+
+    var bisect = d3.bisector(function(d) { return d.key; }).left;
+
+  // Create the circle that travels along the curve of chart
+  var focus = svg
+    .append('g')
+    .append('circle')
+      .style("fill", "none")
+      .attr("stroke", "black")
+      .attr('r', 8.5)
+      .style("opacity", 0)
+
+  // Create the text that travels along the curve of chart
+  var focusText = svg
+    .append('g')
+    .append('text')
+      .style("opacity", 0)
+      .attr("text-anchor", "left")
+      .attr("alignment-baseline", "middle")
+
+  // Create a rect on top of the svg area: this rectangle recovers mouse position
+  svg
+    .append('rect')
+    .style("fill", "none")
+    .style("pointer-events", "all")
+    .attr('width', width)
+    .attr('height', height)
+    .on('mouseover', mouseover)
+    .on('mousemove', mousemove)
+    .on('mouseout', mouseout);
+  // What happens when the mouse move -> show the annotations at the right positions.
+  function mouseover() {
+    focus.style("opacity", 1)
+    focusText.style("opacity",1)
+  }
+
+  function mousemove() {
+    // recover coordinate we need
+    var x0 = xScale.invert(d3.mouse(this)[0]);
+    var i = bisect(data, x0, 1);
+    selectedData = data[i]
+    focus
+      .attr("cx", xScale(selectedData.key))
+      .attr("cy", yScale(selectedData.value))
+    focusText
+      .html("x:" + selectedData.key.toDateString() + "  -  " + "y:" + selectedData.value)
+      .attr("x", xScale(selectedData.key)+15)
+      .attr("y", yScale(selectedData.value))
+    }
+  function mouseout() {
+    focus.style("opacity", 0)
+    focusText.style("opacity", 0)
+  }
+});
+</script>
+</body>
 </html>

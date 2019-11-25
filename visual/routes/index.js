@@ -2,6 +2,7 @@ var express = require('express');
 var app = express();
 var router = express.Router();
 const fs = require('fs');
+const d3 = require('d3-node')().d3;
 
 
 var fixtureData = require('../public/sample_data/fixture_data.json');
@@ -18,6 +19,18 @@ router.get('/', function(req, res, next) {
   console.log("Read DB success\n")
   //console.log("CSVARR")
   //console.log(csvArr);
+  const dataDateVSSize = d3.csvParse(csvArr[0],function(d) {
+    return {
+      key: new Date(d.key), // lowercase and convert "Year" to Date
+      value: +d.value // lowercase and convert "Length" to number
+    };
+  });
+  const dataDateVSRelease = d3.csvParse(csvArr[1],function(d) {
+    return {
+      key: new Date(d.key), // lowercase and convert "Year" to Date
+      value: d.value // lowercase and convert "Length" to number
+    };
+  });
   res.render('index', { title: 'Express',
     fixtureData: fixtureData, 
     barChartHelper: barChartHelper,
@@ -25,7 +38,9 @@ router.get('/', function(req, res, next) {
     csvString: csvString,
     line: line,
     repoName: "Default",
-    csvArr: csvArr});
+    csvArr: csvArr,
+    dataFromNode: csvArr[0],
+    dateDataFromNode: csvArr[1]});
   });
 });
 
@@ -43,13 +58,6 @@ String.prototype.format = function() {
 };
 
 router.get('/:repoName', function(req, res, next) {
-  // res.render('index', { title: 'Express',
-  // 						fixtureData: fixtureData, 
-  // 						barChartHelper: barChartHelper,
-  // 						sample: sample,
-  // 						csvString: csvString,
-  // 						line: line,
-  // 						repoName: req.params.repoName});
   res.redirect('/');
   let query = "SELECT time_val, commit_size FROM commit_size_vs_time ORDER BY time_val ASC;"; // query database to get all the players
 
@@ -117,8 +125,6 @@ function readTeamSizePoints( stringRepoName, stringRepoOwner, callBackFun){
       // console.log(row);
        stringCSV1 = stringCSV1.concat("{0},{1}\n".format(row.date,row.team_size));
      };
-     //console.log(result1);
-     //console.log(stringCSV1);
 
      for (var i = 0; i < result2.length; i++) {
        var row = result2[i];
