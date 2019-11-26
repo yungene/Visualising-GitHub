@@ -146,7 +146,7 @@
         [width, height]
       ]) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
       .on("end", updateChart) // Each time the brush selection changes, trigger the 'updateChart' function
-
+      .on("brush", brushed);
     // Draw the area chart itself
     var area = g.append('g')
       .attr("clip-path", "url(#clip)")
@@ -161,8 +161,8 @@
       .attr('stroke', (d, i) => i < _lineColors.length ? _lineColors[i] : _lineColor)
       .attr('d', areaChart);
 
-     var lines = svg.append("g")
-     .attr("clip-path", "url(#clip)");
+    var lines = svg.append("g")
+      .attr("clip-path", "url(#clip)");
     // lines.selectAll('line')
     //   .date(dateData)
     //   .enter()
@@ -180,7 +180,7 @@
       //console.log(dateData[i].key);
       lines
         .append("line")
-        .attr("class", "myLine"+i)
+        .attr("class", "myLine" + i)
         .attr("x1", xScale(dateData[i].key))
         .attr("y1", 0)
         .attr("x2", xScale(dateData[i].key)) //<<== and here
@@ -191,74 +191,6 @@
 
     }
 
-    // Add the brushing
-    area
-      .append("g")
-      .attr("class", "brush")
-      .call(brush);
-
-    // A function that set idleTimeOut to null
-    var idleTimeout;
-
-    function idled() {
-      idleTimeout = null;
-    }
-
-    // A function that update the chart for given boundaries
-    function updateChart() {
-      console.log("update chart");
-
-      // What are the selected boundaries?
-      extent = d3.event.selection;
-
-      // If no selection, back to initial coordinate. Otherwise, update X axis domain
-      if (!extent) {
-        if (!idleTimeout) return idleTimeout = setTimeout(idled, 350); // This allows to wait a little bit
-        xScale.domain([4, 8])
-      } else {
-        xScale.domain([xScale.invert(extent[0]), xScale.invert(extent[1])])
-        area.select(".brush").call(brush.move, null) // This remove the grey brush area as soon as the selection has been done
-      }
-
-      // Update axis and area position
-      xx.transition().duration(1000).call(xAxis)
-      area
-        .select('.myArea')
-        .transition()
-        .duration(1000)
-        .attr("d", areaChart);
-      for (var i = 0; i < dateData.length; i++) {
-        lines
-          .select('.myLine'+i)
-          .transition()
-          .duration(1000)
-          .attr("x1", xScale(dateData[i].key))
-          .attr("x2", xScale(dateData[i].key)) //<<== and here;
-
-      }
-    }
-
-
-    // If user double click, reinitialize the chart
-    svg.on("dblclick", function() {
-      console.log("User pressed double click");
-      xScale.domain(d3.extent(data, function(d) {
-        return d.key;
-      }))
-      xx.transition().call(xAxis)
-      area
-        .select('.myArea')
-        .transition()
-        .attr("d", areaChart);
-      for (var i = 0; i < dateData.length; i++) {
-        lines
-          .select('.myLine'+i)
-          .transition()
-          .attr("x1", xScale(dateData[i].key))
-          .attr("x2", xScale(dateData[i].key)) //<<== and here;
-
-      }
-    });
 
     // Add labels
     svg.append("text") // text label for the x-axis
@@ -283,6 +215,198 @@
       .style("font-size", "16px")
       .style("text-decoration", "underline")
       .text("Active team size vs Time (2 commits in last 30 days threshold)");
+
+    // define bisector function to get the closes value on x-axis
+    var bisect = d3.bisector(function(d) {
+      return d.key;
+    }).left;
+
+    // Create the circle that travels along the curve of chart
+    var focus = svg
+      .append('g')
+      .append('circle')
+      .style("fill", "none")
+      .attr("stroke", "black")
+      .attr('r', 8.5)
+      .style("opacity", 1);
+    // Create the text that travels along the curve of chart
+    var focusText = svg
+      .append('g')
+      .append('text')
+      .style("opacity", 1)
+      .attr("text-anchor", "left")
+      .attr("alignment-baseline", "middle");
+    // Create the text that shows the next release
+    var focusRelease = svg
+      .append('g')
+      .append('text')
+      .style("opacity", 1)
+      .attr("text-anchor", "left")
+      .attr("alignment-baseline", "middle");
+
+    // Create a rect on top of the svg area: this rectangle recovers mouse position
+    // var rect = svg
+    //   .append('rect')
+    //   .style("fill", "none")
+    //   .style("pointer-events", "all")
+    //   .attr('width', width)
+    //   .attr('height', height)
+    //   .on('mouseover', mouseover)
+    //   .on('mousemove', mousemove)
+    //   .on('mouseout', mouseout)
+    //   //.on('mousedown', mousedown);
+
+
+    // function mousedown(){
+    //   console.log("in mouse down");
+    //   brush_elm = rect.select(".brush").node();
+    //   console.log(brush_elm);
+    //   new_click_event = new Event('end');
+    //   new_click_event.pageX = d3.event.pageX;
+    //   new_click_event.clientX = d3.event.clientX;
+    //   new_click_event.pageY = d3.event.pageY;
+    //   new_click_event.clientY = d3.event.clientY;
+    //   brush_elm.dispatchEvent(new_click_event);
+    // }
+
+    // Add the brushing
+    //rect
+    var context = svg
+      .append("g");
+
+    context.attr("class", "brush")
+      .call(brush);
+
+    context.selectAll(".overlay")
+      .on("mouseover", mouseover)
+      .on("mouseout", mouseout)
+      .on("mousemove", mousemove);
+    //.on("mouseup", mouseup);
+
+    context.selectAll(".selection")
+      .on("mouseover", mouseover);
+    // What happens when the mouse move -> show the annotations at the right positions.
+    function mouseover() {
+      focus.style("opacity", 1);
+      focusText.style("opacity", 1);
+      focusRelease.style("opacity", 1);
+    }
+
+    // function mouseup(){
+    //          area.select(".brush").call(brush.move, null) // This remove the grey brush area as soon as the selection has been done
+
+    // }
+
+    function mousemove() {
+      // recover coordinate we need
+      console.log("in mouse move");
+      var x0 = xScale.invert(d3.mouse(this)[0]);
+      var i = bisect(data, x0, 1);
+      var selectedData = data[i];
+      var x02 = xScale.invert(d3.mouse(this)[0]);
+      var i2 = bisect(dateData, x02, 0);
+      var selectedData2 = dateData[i2];
+      focus
+        .attr("cx", xScale(selectedData.key))
+        .attr("cy", yScale(selectedData.value));
+      focusText
+        .html("x:" + selectedData.key.toDateString() + "  -  " + "y:" + selectedData.value)
+        .attr("x", xScale(selectedData.key) + 15)
+        .attr("y", yScale(selectedData.value));
+      focusRelease
+        .html(selectedData2.value)
+        .attr("x", xScale(selectedData2.key))
+        .attr("y", -5);
+    }
+    // On mouse out, hide the text and cursor
+    function mouseout() {
+      focus.style("opacity", 0)
+      focusText.style("opacity", 0);
+      focusRelease.style("opacity", 0);
+    }
+
+    // A function that set idleTimeOut to null
+    var idleTimeout;
+
+    function idled() {
+      idleTimeout = null;
+    }
+
+    // A function that update the chart for given boundaries
+    function updateChart() {
+      console.log("update chart");
+
+      // What are the selected boundaries?
+      extent = d3.event.selection;
+
+      // If no selection, back to initial coordinate. Otherwise, update X axis domain
+      if (!extent) {
+        if (!idleTimeout) return idleTimeout = setTimeout(idled, 350); // This allows to wait a little bit
+        xScale.domain([4, 8]);
+        console.log("no extent");
+      } else {
+        xScale.domain([xScale.invert(extent[0]), xScale.invert(extent[1])])
+        context.call(brush.move, null) // This remove the grey brush area as soon as the selection has been done
+      }
+      // Update axis and area position
+      xx.transition().duration(1000).call(xAxis)
+      area
+        .select('.myArea')
+        .transition()
+        .duration(1000)
+        .attr("d", areaChart);
+      for (var i = 0; i < dateData.length; i++) {
+        lines
+          .select('.myLine' + i)
+          .transition()
+          .duration(1000)
+          .attr("x1", xScale(dateData[i].key))
+          .attr("x2", xScale(dateData[i].key)) //<<== and here;
+
+      }
+    }
+
+    function brushed() {
+      console.log("in brushed")
+      var x0 = xScale.invert(d3.mouse(this)[0]);
+      var i = bisect(data, x0, 1);
+      var selectedData = data[i];
+      var x02 = xScale.invert(d3.mouse(this)[0]);
+      var i2 = bisect(dateData, x02, 0);
+      var selectedData2 = dateData[i2];
+      focus
+        .attr("cx", xScale(selectedData.key))
+        .attr("cy", yScale(selectedData.value));
+      focusText
+        .html("x:" + selectedData.key.toDateString() + "  -  " + "y:" + selectedData.value)
+        .attr("x", xScale(selectedData.key) + 15)
+        .attr("y", yScale(selectedData.value));
+      focusRelease
+        .html(selectedData2.value)
+        .attr("x", xScale(selectedData2.key))
+        .attr("y", -5);
+    }
+
+    // If user double click, reinitialize the chart
+    svg.on("dblclick", function() {
+      console.log("User pressed double click");
+      xScale.domain(d3.extent(data, function(d) {
+        return d.key;
+      }))
+      xx.transition().call(xAxis)
+      area
+        .select('.myArea')
+        .transition()
+        .attr("d", areaChart);
+      for (var i = 0; i < dateData.length; i++) {
+        lines
+          .select('.myLine' + i)
+          .transition()
+          .attr("x1", xScale(dateData[i].key))
+          .attr("x2", xScale(dateData[i].key)) //<<== and here;
+
+      }
+    });
 
   });
 </script>
