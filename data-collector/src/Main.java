@@ -56,7 +56,11 @@ public class Main {
 	private static String[][] getRepos(Connection conn) {
 		String[][] result = {{"CS3012-SWENG","yungene"},{"jquery","jquery"},
 				{"jax","google"},
-				{"filament","google"}};
+				{"filament","google"},
+				{"Mindustry","Anuken"},
+				{"gost","ginuerzh"},
+				{"svelte","sveltejs"},
+				{"python-for-android","kivy"}};
 
 		return result;
 	}

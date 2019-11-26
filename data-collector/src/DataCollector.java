@@ -36,7 +36,7 @@ public class DataCollector {
 	// Configurations
 	int exponentialBackoffTime = 1;
 	int exponentialBackoffMultiplier = 2;
-	int exponentialBackoffLimit = (int) Math.pow(exponentialBackoffMultiplier, 3);
+	int exponentialBackoffLimit = (int) Math.pow(exponentialBackoffMultiplier, 10);
 	int timeInterval = 30; // days
 	int commitThreshold = 2; // commits
 	int daysToProcess = 400; // days to process
@@ -142,7 +142,7 @@ public class DataCollector {
 			RepositoryCommit commitObj = commitService.getCommit(repoObj, commit.getSha());
 			java.util.Date date = commitObj.getCommit().getCommitter().getDate();
 			if (date.compareTo(limit) < 0) {
-				System.out.printf("skip tag, date:%s by name:%s\n", date.toGMTString(), tagName);
+				//System.out.printf("skip tag, date:%s by name:%s\n", date.toGMTString(), tagName);
 				continue;
 			}
 			setTag.setDate(1, new java.sql.Date(date.getTime()));
@@ -190,10 +190,10 @@ public class DataCollector {
 									new java.sql.Date(addDates(last_date, timeInterval).getTime()));
 							setTeamSizeVSTime.setInt(2, teamSize);
 							setTeamSizeVSTime.executeUpdate();
-							System.out.printf("Insert team size, date:%s by team size:%s\n",
-									addDates(last_date, timeInterval), teamSize);
-							last_date = addDates(last_date, -1);
+//							System.out.printf("Insert team size, date:%s by team size:%s\n",
+//									addDates(last_date, timeInterval), teamSize);
 						}
+						last_date = addDates(last_date, -1);
 					}
 
 					String authorName = "unnamed";
