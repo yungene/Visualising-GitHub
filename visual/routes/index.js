@@ -12,100 +12,117 @@ var line = require('../public/javascripts/line');
 var repoName = "CS3012"
 
 const path = require("path");
-const csvString = fs.readFileSync(path.resolve(__dirname,'../public/sample_data/data.csv')).toString();
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  readTeamSizePoints("filament","google", function (csvArr){
-  console.log("Read DB success\n")
-  //console.log("CSVARR")
-  //console.log(csvArr);
-  const dataDateVSSize = d3.csvParse(csvArr[0],function(d) {
-    return {
-      key: new Date(d.key), // lowercase and convert "Year" to Date
-      value: +d.value // lowercase and convert "Length" to number
-    };
-  });
-  const dataDateVSRelease = d3.csvParse(csvArr[1],function(d) {
-    return {
-      key: new Date(d.key), // lowercase and convert "Year" to Date
-      value: d.value // lowercase and convert "Length" to number
-    };
-  });
-  res.render('index', { title: 'Express',
-    fixtureData: fixtureData, 
-    barChartHelper: barChartHelper,
-    sample: sample,
-    csvString: csvString,
-    line: line,
-    repoName: "Default",
-    csvArr: csvArr,
-    dataFromNode: csvArr[0],
-    dateDataFromNode: csvArr[1]});
+  var splitArr = [];
+  if (req.app.locals.dropdownVals.length == 0) {
+    splitArr = ["no-input", "no-input"];
+  } else {
+    splitArr = req.app.locals.dropdownVals[0].split(",");
+  }
+  readTeamSizePoints(splitArr[1], splitArr[0], function(csvArr) {
+    console.log("Read DB success\n")
+    //console.log("CSVARR")
+    //console.log(csvArr);
+    const dataDateVSSize = d3.csvParse(csvArr[0], function(d) {
+      return {
+        key: new Date(d.key), // lowercase and convert "Year" to Date
+        value: +d.value // lowercase and convert "Length" to number
+      };
+    });
+    const dataDateVSRelease = d3.csvParse(csvArr[1], function(d) {
+      return {
+        key: new Date(d.key), // lowercase and convert "Year" to Date
+        value: d.value // lowercase and convert "Length" to number
+      };
+    });
+
+    res.render('index', {
+      title: 'Express',
+      repoName: splitArr[1],
+      repoOwner: splitArr[0],
+      dataFromNode: csvArr[0],
+      dateDataFromNode: csvArr[1],
+      dropdownVals: req.app.locals.dropdownVals
+    });
   });
 });
-
-const { Parser } = require('json2csv');
-const fields = ['key', 'value'];
-const json2csvParser = new Parser({ fields });
 
 String.prototype.format = function() {
   var formatted = this;
   for (var i = 0; i < arguments.length; i++) {
-    var regexp = new RegExp('\\{'+i+'\\}', 'gi');
+    var regexp = new RegExp('\\{' + i + '\\}', 'gi');
     formatted = formatted.replace(regexp, arguments[i]);
   }
   return formatted;
 };
 
 router.get('/:repoName', function(req, res, next) {
-  res.redirect('/');
-  let query = "SELECT time_val, commit_size FROM commit_size_vs_time ORDER BY time_val ASC;"; // query database to get all the players
+  var splitArr = req.body.repoName.split(",");
+  readTeamSizePoints(splitArr[1], splitArr[0], function(csvArr) {
+    console.log("Read DB success\n")
+    //console.log("CSVARR")
+    //console.log(csvArr);
+    const dataDateVSSize = d3.csvParse(csvArr[0], function(d) {
+      return {
+        key: new Date(d.key), // lowercase and convert "Year" to Date
+        value: +d.value // lowercase and convert "Length" to number
+      };
+    });
+    const dataDateVSRelease = d3.csvParse(csvArr[1], function(d) {
+      return {
+        key: new Date(d.key), // lowercase and convert "Year" to Date
+        value: d.value // lowercase and convert "Length" to number
+      };
+    });
+    res.render('index', {
+      title: 'Express',
+      repoName: splitArr[1],
+      repoOwner: splitArr[0],
+      dataFromNode: csvArr[0],
+      dateDataFromNode: csvArr[1],
+      dropdownVals: req.app.locals.dropdownVals
+    });
+  });
 
-        // execute query
-        db.query(query, (err, result) => {
-          if (err) {
-           console.log(err);
-           res.redirect('/');
-         }
-
-         var csvString = "key,value\n";
-         for (var i = 0; i < result.length; i++) {
-          var row = result[i];
-          csvString = csvString.concat("{0},{1}\n".format(row.time_val,row.commit_size))
-        }
-        console.log(result);
-        console.log(csvString);
-        console.log(json2csvParser.parse(result));
-        res.render('index', { title: 'Express',
-          fixtureData: fixtureData, 
-          barChartHelper: barChartHelper,
-          sample: sample,
-          csvString: csvString,
-          line: line,
-          repoName: "Default"});
-      });
-      });
-
-router.post("/test/submit", function(req, res, next) {
-	repoName = req.body.repoName;
-	res.redirect('/' + repoName);
 });
 
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express',
-    fixtureData: fixtureData, 
-    barChartHelper: barChartHelper,
-    sample: sample,
-    csvString: csvString,
-    line: line,
-    repoName: "Default"});
+router.post("/test/submit", function(req, res, next) {
+  repoName = req.body.repoName;
+  console.log(repoName);
+  var splitArr = req.body.repoName.split(",");
+  readTeamSizePoints(splitArr[1], splitArr[0], function(csvArr) {
+    console.log("Read DB success\n")
+    //console.log("CSVARR")
+    //console.log(csvArr);
+    const dataDateVSSize = d3.csvParse(csvArr[0], function(d) {
+      return {
+        key: new Date(d.key), // lowercase and convert "Year" to Date
+        value: +d.value // lowercase and convert "Length" to number
+      };
+    });
+    const dataDateVSRelease = d3.csvParse(csvArr[1], function(d) {
+      return {
+        key: new Date(d.key), // lowercase and convert "Year" to Date
+        value: d.value // lowercase and convert "Length" to number
+      };
+    });
+    res.render('index', {
+      title: 'Express',
+      repoName: splitArr[1],
+      repoOwner: splitArr[0],
+      dataFromNode: csvArr[0],
+      dateDataFromNode: csvArr[1],
+      dropdownVals: req.app.locals.dropdownVals
+    });
+  });
 });
 
 // Returns an array of size 2, array[0] is CSV string for active_team_size vs time points,  array[1] is CSV string for date vs release_name points
-function readTeamSizePoints( stringRepoName, stringRepoOwner, callBackFun){
-  let stringQuery1 = "SELECT date, team_size FROM active_team_size_vs_time WHERE repo_name=\'{0}\' AND repo_owner=\'{1}\' ORDER BY date ASC\n".format(stringRepoName,stringRepoOwner);
+function readTeamSizePoints(stringRepoName, stringRepoOwner, callBackFun) {
+  let stringQuery1 = "SELECT date, team_size FROM active_team_size_vs_time WHERE repo_name=\'{0}\' AND repo_owner=\'{1}\' ORDER BY date ASC\n".format(stringRepoName, stringRepoOwner);
   console.log(stringQuery1);
-  let stringQuery2 = "SELECT date, release_name FROM release_table WHERE repo_name=\'{0}\' AND repo_owner=\'{1}\' ORDER BY date ASC\n".format(stringRepoName,stringRepoOwner);
+  let stringQuery2 = "SELECT date, release_name FROM release_table WHERE repo_name=\'{0}\' AND repo_owner=\'{1}\' ORDER BY date ASC\n".format(stringRepoName, stringRepoOwner);
   console.log(stringQuery2);
   var stringCSV1 = "key,value\n";
   var stringCSV2 = "key,value\n";
@@ -120,19 +137,19 @@ function readTeamSizePoints( stringRepoName, stringRepoOwner, callBackFun){
         res.redirect('/error');
       }
       for (var i = 0; i < result1.length; i++) {
-       var row = result1[i];
-       //console.log("row out ");
-      // console.log(row);
-       stringCSV1 = stringCSV1.concat("{0},{1}\n".format(row.date,row.team_size));
-     };
+        var row = result1[i];
+        //console.log("row out ");
+        // console.log(row);
+        stringCSV1 = stringCSV1.concat("{0},{1}\n".format(row.date, row.team_size));
+      };
 
-     for (var i = 0; i < result2.length; i++) {
-       var row = result2[i];
-       stringCSV2 = stringCSV2.concat("{0},{1}\n".format(row.date,row.release_name));
-     };
+      for (var i = 0; i < result2.length; i++) {
+        var row = result2[i];
+        stringCSV2 = stringCSV2.concat("{0},{1}\n".format(row.date, row.release_name));
+      };
 
-     callBackFun( [stringCSV1,stringCSV2]);
-   });
+      callBackFun([stringCSV1, stringCSV2]);
+    });
   });
 };
 

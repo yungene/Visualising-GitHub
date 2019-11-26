@@ -19,22 +19,35 @@ var config = require('./config/config')[env];
 // Set up the database
 // create connection to database
 // the mysql.createConnection function takes in a configuration object which contains host, user, password and the database name.
-const db = mysql.createConnection ({
-    host: config.database.host,
-    user: config.database.user,
-    password: config.database.password,
-    database: config.database.db,
-    port: config.database.port,
-    dateStrings: true
+const db = mysql.createConnection({
+  host: config.database.host,
+  user: config.database.user,
+  password: config.database.password,
+  database: config.database.db,
+  port: config.database.port,
+  dateStrings: true
 });
 
 // connect to database
 db.connect((err) => {
-    if (err) {
-      console.log('Error connecting to database');
-        throw err;
+  if (err) {
+    console.log('Error connecting to database');
+    throw err;
+  }
+  console.log('Connected to database');
+  // read in repos into global array
+});
+app.locals.dropdownVals = [];
+let stringQuery = "SELECT CONCAT(repo_owner,\",\",repo_name) as name FROM repos_visited WHERE finished = TRUE;"
+console.log(stringQuery);
+db.query(stringQuery, (err1, result1) => {
+  if (err1) {
+    console.log(err1);
+  } else {
+    for (var i = 0; i < result1.length; i++) {
+      app.locals.dropdownVals.push(result1[i].name);
     }
-    console.log('Connected to database');
+  };
 });
 global.db = db;
 
@@ -45,7 +58,9 @@ app.set('view engine', 'ejs');
 
 app.use(logger('dev'));
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({
+  extended: false
+}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -70,19 +85,24 @@ app.use(function(err, req, res, next) {
 });
 
 function exitHandler(options, exitCode) {
-	db.destroy();
-    if (options.cleanup) console.log('clean');
-    if (exitCode || exitCode === 0) console.log(exitCode);
-    if (options.exit){
-    	console.log('SIGINT');
-     	process.exit();}
+  db.destroy();
+  if (options.cleanup) console.log('clean');
+  if (exitCode || exitCode === 0) console.log(exitCode);
+  if (options.exit) {
+    console.log('SIGINT');
+    process.exit();
+  }
 }
 
 //do something when app is closing
-process.on('exit', exitHandler.bind(null,{cleanup:true}));
+process.on('exit', exitHandler.bind(null, {
+  cleanup: true
+}));
 
 //catches ctrl+c event
-process.on('SIGINT', exitHandler.bind(null, {exit:true}));
+process.on('SIGINT', exitHandler.bind(null, {
+  exit: true
+}));
 
 
 module.exports = app;
