@@ -134,7 +134,7 @@ public class DataCollector {
 		Repository repoObj = repoService.getRepository(repoOwner, repo);
 		List<RepositoryTag> repoTags = repoService.getTags(repoObj);
 		Calendar calendar = Calendar.getInstance();
-		calendar.add(Calendar.DATE, -1 * daysToProcess);
+		calendar.add(Calendar.DATE, -1 * daysToProcess + timeInterval);
 		java.util.Date limit = calendar.getTime();
 		for (RepositoryTag tag : repoTags) {
 			String tagName = tag.getName();

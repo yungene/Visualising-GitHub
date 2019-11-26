@@ -60,7 +60,8 @@ public class Main {
 				{"Mindustry","Anuken"},
 				{"gost","ginuerzh"},
 				{"svelte","sveltejs"},
-				{"python-for-android","kivy"}};
+				{"python-for-android","kivy"},
+				{"coc.nvim","neoclide"}};
 
 		return result;
 	}
