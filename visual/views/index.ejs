@@ -36,8 +36,9 @@
 
     const data = d3.csvParse(dataCSV, function(d) {
       return {
-        key: new Date(d.key), // convert "key" to Date
-        value: +d.value // convert "value" to number
+        key: new Date(d.key), // lowercase and convert "Year" to Date
+        value: +d.value, // lowercase and convert "Length" to number
+        backfill: +d.backfill
       };
     });
     const dateData = d3.csvParse(dateDataCSV, function(d) {
@@ -214,7 +215,7 @@
       .style("text-anchor", "middle")
       .style("font-size", "16px")
       .style("text-decoration", "underline")
-      .text("Active team size vs Time (2 commits in last 30 days threshold)");
+      .text("Active team size vs Time (2 commits in last <%= backfill %> days threshold)");
 
     // define bisector function to get the closes value on x-axis
     var bisect = d3.bisector(function(d) {
@@ -228,46 +229,21 @@
       .style("fill", "none")
       .attr("stroke", "black")
       .attr('r', 8.5)
-      .style("opacity", 1);
+      .style("opacity", 0);
     // Create the text that travels along the curve of chart
     var focusText = svg
       .append('g')
       .append('text')
-      .style("opacity", 1)
+      .style("opacity", 0)
       .attr("text-anchor", "left")
       .attr("alignment-baseline", "middle");
     // Create the text that shows the next release
     var focusRelease = svg
       .append('g')
       .append('text')
-      .style("opacity", 1)
+      .style("opacity", 0)
       .attr("text-anchor", "left")
       .attr("alignment-baseline", "middle");
-
-    // Create a rect on top of the svg area: this rectangle recovers mouse position
-    // var rect = svg
-    //   .append('rect')
-    //   .style("fill", "none")
-    //   .style("pointer-events", "all")
-    //   .attr('width', width)
-    //   .attr('height', height)
-    //   .on('mouseover', mouseover)
-    //   .on('mousemove', mousemove)
-    //   .on('mouseout', mouseout)
-    //   //.on('mousedown', mousedown);
-
-
-    // function mousedown(){
-    //   console.log("in mouse down");
-    //   brush_elm = rect.select(".brush").node();
-    //   console.log(brush_elm);
-    //   new_click_event = new Event('end');
-    //   new_click_event.pageX = d3.event.pageX;
-    //   new_click_event.clientX = d3.event.clientX;
-    //   new_click_event.pageY = d3.event.pageY;
-    //   new_click_event.clientY = d3.event.clientY;
-    //   brush_elm.dispatchEvent(new_click_event);
-    // }
 
     // Add the brushing
     //rect

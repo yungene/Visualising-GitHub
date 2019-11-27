@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS repos_visited (
 	finished 			BOOLEAN NOT NULL DEFAULT FALSE,
 	start_time 			DATETIME,
 	finish_time 		DATETIME,
-	PRIMARY KEY (repo_name,repo_owner)
+	time_delta			INT 		 NOT NULL,
+	PRIMARY KEY (repo_name,repo_owner,time_delta)
 );
 
 CREATE TABLE IF NOT EXISTS active_team_size_vs_time (
@@ -31,7 +32,7 @@ CREATE TABLE IF NOT EXISTS active_team_size_vs_time (
 	date 				DATE 		 NOT NULL,
 	team_size 			INT UNSIGNED NOT NULL,
 	time_delta			INT 		 NOT NULL,
-	PRIMARY KEY (repo_name, repo_owner, date)
+	PRIMARY KEY (repo_name, repo_owner, date,time_delta)
 );
 
 CREATE TABLE IF NOT EXISTS release_table (

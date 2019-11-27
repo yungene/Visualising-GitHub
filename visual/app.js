@@ -38,7 +38,7 @@ db.connect((err) => {
   // read in repos into global array
 });
 app.locals.dropdownVals = [];
-let stringQuery = "SELECT CONCAT(repo_owner,\",\",repo_name) as name FROM repos_visited WHERE finished = TRUE;"
+let stringQuery = "SELECT CONCAT(repo_owner,\",\",repo_name,\",\",time_delta) as name FROM repos_visited WHERE finished = TRUE;"
 console.log(stringQuery);
 db.query(stringQuery, (err1, result1) => {
   if (err1) {

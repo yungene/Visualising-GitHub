@@ -37,7 +37,7 @@ public class DataCollector {
 	int exponentialBackoffTime = 1;
 	int exponentialBackoffMultiplier = 2;
 	int exponentialBackoffLimit = (int) Math.pow(exponentialBackoffMultiplier, 10);
-	int timeInterval = 30; // days
+	int timeInterval; // days
 	int commitThreshold = 2; // commits
 	int daysToProcess = 400; // days to process
 
@@ -52,12 +52,13 @@ public class DataCollector {
 		}
 	}
 
-	public DataCollector(Connection conn, GitHubClient client, String repo, String repoOwner) throws SQLException {
+	public DataCollector(Connection conn, GitHubClient client, String repo, String repoOwner, int timeInterval) throws SQLException {
 		super();
 		this.conn = conn;
 		this.client = client;
 		this.repo = repo;
 		this.repoOwner = repoOwner;
+		this.timeInterval = timeInterval;
 
 		System.out.printf("Created a new DataCollector for repo:%s by user:%s\n", repo, repoOwner);
 	}

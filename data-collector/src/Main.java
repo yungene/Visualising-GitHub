@@ -16,14 +16,15 @@ public class Main {
 	// static PreparedStatement processRepo;
 	// static PreparedStatement insertRepo;
 	static String processRepoSQL = "UPDATE repos_visited " + "SET finished= ? ," + "start_time = ? ,"
-			+ "finish_time = ?" + "WHERE repo_name= ? AND repo_owner= ?;";
-	static String isRepoProcessedSQL = "SELECT finished FROM repos_visited " + "WHERE repo_name= ? AND repo_owner= ?;";
-	static String insertRepoSQL = "INSERT INTO repos_visited" + " VALUES(?,?,FALSE,NULL,NULL);";
+			+ "finish_time = ?" + "WHERE repo_name= ? AND repo_owner= ? AND time_delta= ?;";
+	static String isRepoProcessedSQL = "SELECT finished FROM repos_visited " + "WHERE repo_name= ? AND repo_owner= ? AND time_delta= ?;";
+	static String insertRepoSQL = "INSERT INTO repos_visited" + " VALUES(?,?,FALSE,NULL,NULL,?);";
 
 	public static void main(String[] args) {
 		Calendar calendar = Calendar.getInstance();
 		GitHubClient client = new GitHubClient().setOAuth2Token(readToken());
 		// Connection conn = null;
+		int timeInterval = 15;
 
 		try (Connection conn = MySQLJDBCUtil.getConnection();
 				PreparedStatement isRepoProcessed = conn.prepareStatement(isRepoProcessedSQL);
@@ -36,11 +37,11 @@ public class Main {
 			String[][] repos = getRepos(conn);
 			for (String[] repo : repos) {
 				System.out.printf("Starting to process repo:%s by user:%s\n", repo[0], repo[1]);
-				if (!processedRepo(conn, repo[0], repo[1], isRepoProcessed, insertRepo)) {
-					DataCollector collector = new DataCollector(conn, client, repo[0], repo[1]);
+				if (!processedRepo(conn, repo[0], repo[1], isRepoProcessed, insertRepo,timeInterval)) {
+					DataCollector collector = new DataCollector(conn, client, repo[0], repo[1],timeInterval);
 					java.util.Date start = calendar.getTime();
 					if (collector.process()) {
-						markAsProcessed(conn, repo[0], repo[1], start, calendar.getTime(), processRepo);
+						markAsProcessed(conn, repo[0], repo[1], start, calendar.getTime(), processRepo,timeInterval);
 					} else {
 						System.err.printf("Failed to process repo:%s by user:%s\n", repo[0], repo[1]);
 					}
@@ -67,9 +68,10 @@ public class Main {
 	}
 
 	private static boolean processedRepo(Connection conn, String repo, String repoOwner,
-			PreparedStatement isRepoProcessed, PreparedStatement insertRepo) throws SQLException {
+			PreparedStatement isRepoProcessed, PreparedStatement insertRepo,int timeInterval) throws SQLException {
 		isRepoProcessed.setString(1, repo);
 		isRepoProcessed.setString(2, repoOwner);
+		isRepoProcessed.setInt(3, timeInterval);
 		ResultSet rs = isRepoProcessed.executeQuery();
 		System.out.printf("Search of repos_visited repo:%s by user:%s\n", repo, repoOwner);
 		// loop through the result set
@@ -84,6 +86,7 @@ public class Main {
 		if (count == 0) {
 			insertRepo.setString(1, repo);
 			insertRepo.setString(2, repoOwner);
+			insertRepo.setInt(3, timeInterval);
 			insertRepo.executeUpdate();
 			System.out.printf("Insert into repos_visited repo:%s by user:%s\n", repo, repoOwner);
 			conn.commit();
@@ -92,12 +95,13 @@ public class Main {
 	}
 
 	private static void markAsProcessed(Connection conn, String repo, String repoOwner, java.util.Date start,
-			java.util.Date finish, PreparedStatement processRepo) throws SQLException {
+			java.util.Date finish, PreparedStatement processRepo,int timeInterval) throws SQLException {
 		processRepo.setBoolean(1, true);
 		processRepo.setDate(2, new java.sql.Date(start.getTime()));
 		processRepo.setDate(3, new java.sql.Date(finish.getTime()));
 		processRepo.setString(4, repo);
 		processRepo.setString(5, repoOwner);
+		processRepo.setInt(6, timeInterval);
 		int rs = processRepo.executeUpdate();
 		System.out.printf("Update of repos_visited repo:%s by user:%s\n", repo, repoOwner);
 	}
