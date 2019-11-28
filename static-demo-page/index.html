@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Express</title>
+  <link rel='stylesheet' href='/stylesheets/style.css' />
+  
+</head>
+
+<body>
+  <h1>D3 Server-side Demo</h1>
+  <h2>Date axis test</h2>
+  <form action="/test/submit" method="post">
+  <select class="form-control" id="sel1" name="repoName">
+  
+     <option value='neoclide,coc.nvim,30,3' >neoclide,coc.nvim,30,3</option>
+  
+     <option value='google,filament,15,2' >google,filament,15,2</option>
+  
+     <option value='google,filament,30,3' >google,filament,30,3</option>
+  
+     <option value='ginuerzh,gost,15,2' >ginuerzh,gost,15,2</option>
+  
+     <option value='ginuerzh,gost,30,3' >ginuerzh,gost,30,3</option>
+  
+     <option value='google,jax,15,2' >google,jax,15,2</option>
+  
+     <option value='google,jax,30,3' >google,jax,30,3</option>
+  
+     <option value='Anuken,Mindustry,15,2' >Anuken,Mindustry,15,2</option>
+  
+     <option value='Anuken,Mindustry,30,3' >Anuken,Mindustry,30,3</option>
+  
+     <option value='kivy,python-for-android,30,3' >kivy,python-for-android,30,3</option>
+  
+     <option value='sveltejs,svelte,15,2' >sveltejs,svelte,15,2</option>
+  
+     <option value='sveltejs,svelte,30,3' >sveltejs,svelte,30,3</option>
+  
+  </select>
+  <input type='submit' name="submit"/>
+  </form>
+  <br>
+  
+  <div id="container">
+    <h2>Data for repo:Mindustry by owner:Anuken</h2>
+    <div id="chart"></div>
+  </div>
+  <script src="https://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+  <script type="text/javascript">
+  // Add event listener to only execute JS after the page is loaded
+  document.addEventListener('DOMContentLoaded', function(e) {
+    //vars
+    // Convert the CSV received from backend into a valid JS array
+    var dataCSV = "key,value,backfill,threshold\n2018-10-25,4,30,3\n2018-10-26,4,30,3\n2018-10-27,4,30,3\n2018-10-28,4,30,3\n2018-10-29,4,30,3\n2018-10-30,4,30,3\n2018-10-31,4,30,3\n2018-11-01,4,30,3\n2018-11-02,5,30,3\n2018-11-03,6,30,3\n2018-11-04,6,30,3\n2018-11-05,6,30,3\n2018-11-06,6,30,3\n2018-11-07,6,30,3\n2018-11-08,6,30,3\n2018-11-09,6,30,3\n2018-11-10,6,30,3\n2018-11-11,5,30,3\n2018-11-12,5,30,3\n2018-11-13,4,30,3\n2018-11-14,6,30,3\n2018-11-15,7,30,3\n2018-11-16,6,30,3\n2018-11-17,6,30,3\n2018-11-18,6,30,3\n2018-11-19,8,30,3\n2018-11-20,9,30,3\n2018-11-21,10,30,3\n2018-11-22,10,30,3\n2018-11-23,10,30,3\n2018-11-24,10,30,3\n2018-11-25,10,30,3\n2018-11-26,10,30,3\n2018-11-27,10,30,3\n2018-11-28,10,30,3\n2018-11-29,10,30,3\n2018-11-30,10,30,3\n2018-12-01,9,30,3\n2018-12-02,8,30,3\n2018-12-03,9,30,3\n2018-12-04,9,30,3\n2018-12-05,9,30,3\n2018-12-06,9,30,3\n2018-12-07,8,30,3\n2018-12-08,8,30,3\n2018-12-09,6,30,3\n2018-12-10,6,30,3\n2018-12-11,6,30,3\n2018-12-12,6,30,3\n2018-12-13,6,30,3\n2018-12-14,6,30,3\n2018-12-15,6,30,3\n2018-12-16,6,30,3\n2018-12-17,6,30,3\n2018-12-18,6,30,3\n2018-12-19,6,30,3\n2018-12-20,6,30,3\n2018-12-21,6,30,3\n2018-12-22,5,30,3\n2018-12-23,5,30,3\n2018-12-24,5,30,3\n2018-12-25,5,30,3\n2018-12-26,5,30,3\n2018-12-27,5,30,3\n2018-12-28,5,30,3\n2018-12-29,5,30,3\n2018-12-30,5,30,3\n2018-12-31,5,30,3\n2019-01-01,5,30,3\n2019-01-02,5,30,3\n2019-01-03,5,30,3\n2019-01-04,5,30,3\n2019-01-05,5,30,3\n2019-01-06,5,30,3\n2019-01-07,4,30,3\n2019-01-08,4,30,3\n2019-01-09,4,30,3\n2019-01-10,4,30,3\n2019-01-11,4,30,3\n2019-01-12,4,30,3\n2019-01-13,4,30,3\n2019-01-14,2,30,3\n2019-01-15,2,30,3\n2019-01-16,2,30,3\n2019-01-17,2,30,3\n2019-01-18,2,30,3\n2019-01-19,2,30,3\n2019-01-20,2,30,3\n2019-01-21,2,30,3\n2019-01-22,2,30,3\n2019-01-23,2,30,3\n2019-01-24,2,30,3\n2019-01-25,2,30,3\n2019-01-26,1,30,3\n2019-01-27,1,30,3\n2019-01-28,1,30,3\n2019-01-29,1,30,3\n2019-01-30,1,30,3\n2019-01-31,1,30,3\n2019-02-01,1,30,3\n2019-02-02,1,30,3\n2019-02-03,1,30,3\n2019-02-04,1,30,3\n2019-02-05,1,30,3\n2019-02-06,1,30,3\n2019-02-07,1,30,3\n2019-02-08,1,30,3\n2019-02-09,1,30,3\n2019-02-10,1,30,3\n2019-02-11,1,30,3\n2019-02-12,1,30,3\n2019-02-13,1,30,3\n2019-02-14,1,30,3\n2019-02-15,1,30,3\n2019-02-16,1,30,3\n2019-02-17,1,30,3\n2019-02-18,1,30,3\n2019-02-19,1,30,3\n2019-02-20,1,30,3\n2019-02-21,1,30,3\n2019-02-22,1,30,3\n2019-02-23,1,30,3\n2019-02-24,1,30,3\n2019-02-25,1,30,3\n2019-02-26,1,30,3\n2019-02-27,1,30,3\n2019-02-28,1,30,3\n2019-03-01,1,30,3\n2019-03-02,1,30,3\n2019-03-03,1,30,3\n2019-03-04,1,30,3\n2019-03-05,1,30,3\n2019-03-06,2,30,3\n2019-03-07,2,30,3\n2019-03-08,2,30,3\n2019-03-09,2,30,3\n2019-03-10,2,30,3\n2019-03-11,3,30,3\n2019-03-12,3,30,3\n2019-03-13,3,30,3\n2019-03-14,3,30,3\n2019-03-15,2,30,3\n2019-03-16,2,30,3\n2019-03-17,3,30,3\n2019-03-18,3,30,3\n2019-03-19,3,30,3\n2019-03-20,3,30,3\n2019-03-21,4,30,3\n2019-03-22,4,30,3\n2019-03-23,4,30,3\n2019-03-24,4,30,3\n2019-03-25,4,30,3\n2019-03-26,4,30,3\n2019-03-27,4,30,3\n2019-03-28,3,30,3\n2019-03-29,4,30,3\n2019-03-30,4,30,3\n2019-03-31,4,30,3\n2019-04-01,4,30,3\n2019-04-02,4,30,3\n2019-04-03,4,30,3\n2019-04-04,4,30,3\n2019-04-05,4,30,3\n2019-04-06,4,30,3\n2019-04-07,4,30,3\n2019-04-08,4,30,3\n2019-04-09,4,30,3\n2019-04-10,3,30,3\n2019-04-11,3,30,3\n2019-04-12,3,30,3\n2019-04-13,3,30,3\n2019-04-14,3,30,3\n2019-04-15,3,30,3\n2019-04-16,3,30,3\n2019-04-17,3,30,3\n2019-04-18,3,30,3\n2019-04-19,2,30,3\n2019-04-20,2,30,3\n2019-04-21,2,30,3\n2019-04-22,2,30,3\n2019-04-23,1,30,3\n2019-04-24,1,30,3\n2019-04-25,1,30,3\n2019-04-26,1,30,3\n2019-04-27,1,30,3\n2019-04-28,1,30,3\n2019-04-29,1,30,3\n2019-04-30,1,30,3\n2019-05-01,2,30,3\n2019-05-02,3,30,3\n2019-05-03,4,30,3\n2019-05-04,4,30,3\n2019-05-05,3,30,3\n2019-05-06,3,30,3\n2019-05-07,3,30,3\n2019-05-08,3,30,3\n2019-05-09,3,30,3\n2019-05-10,3,30,3\n2019-05-11,3,30,3\n2019-05-12,4,30,3\n2019-05-13,4,30,3\n2019-05-14,4,30,3\n2019-05-15,4,30,3\n2019-05-16,4,30,3\n2019-05-17,4,30,3\n2019-05-18,4,30,3\n2019-05-19,4,30,3\n2019-05-20,4,30,3\n2019-05-21,4,30,3\n2019-05-22,4,30,3\n2019-05-23,4,30,3\n2019-05-24,4,30,3\n2019-05-25,4,30,3\n2019-05-26,4,30,3\n2019-05-27,4,30,3\n2019-05-28,4,30,3\n2019-05-29,4,30,3\n2019-05-30,4,30,3\n2019-05-31,4,30,3\n2019-06-01,4,30,3\n2019-06-02,4,30,3\n2019-06-03,3,30,3\n2019-06-04,3,30,3\n2019-06-05,2,30,3\n2019-06-06,3,30,3\n2019-06-07,3,30,3\n2019-06-08,3,30,3\n2019-06-09,3,30,3\n2019-06-10,3,30,3\n2019-06-11,3,30,3\n2019-06-12,4,30,3\n2019-06-13,4,30,3\n2019-06-14,4,30,3\n2019-06-15,4,30,3\n2019-06-16,4,30,3\n2019-06-17,4,30,3\n2019-06-18,4,30,3\n2019-06-19,4,30,3\n2019-06-20,4,30,3\n2019-06-21,4,30,3\n2019-06-22,4,30,3\n2019-06-23,5,30,3\n2019-06-24,5,30,3\n2019-06-25,5,30,3\n2019-06-26,5,30,3\n2019-06-27,5,30,3\n2019-06-28,5,30,3\n2019-06-29,5,30,3\n2019-06-30,5,30,3\n2019-07-01,5,30,3\n2019-07-02,4,30,3\n2019-07-03,4,30,3\n2019-07-04,4,30,3\n2019-07-05,4,30,3\n2019-07-06,4,30,3\n2019-07-07,4,30,3\n2019-07-08,4,30,3\n2019-07-09,4,30,3\n2019-07-10,4,30,3\n2019-07-11,3,30,3\n2019-07-12,3,30,3\n2019-07-13,3,30,3\n2019-07-14,3,30,3\n2019-07-15,3,30,3\n2019-07-16,3,30,3\n2019-07-17,3,30,3\n2019-07-18,3,30,3\n2019-07-19,3,30,3\n2019-07-20,3,30,3\n2019-07-21,3,30,3\n2019-07-22,3,30,3\n2019-07-23,2,30,3\n2019-07-24,2,30,3\n2019-07-25,2,30,3\n2019-07-26,1,30,3\n2019-07-27,1,30,3\n2019-07-28,1,30,3\n2019-07-29,1,30,3\n2019-07-30,2,30,3\n2019-07-31,2,30,3\n2019-08-01,2,30,3\n2019-08-02,2,30,3\n2019-08-03,2,30,3\n2019-08-04,2,30,3\n2019-08-05,2,30,3\n2019-08-06,1,30,3\n2019-08-07,1,30,3\n2019-08-08,1,30,3\n2019-08-09,1,30,3\n2019-08-10,1,30,3\n2019-08-11,1,30,3\n2019-08-12,1,30,3\n2019-08-13,1,30,3\n2019-08-14,1,30,3\n2019-08-15,1,30,3\n2019-08-16,1,30,3\n2019-08-17,2,30,3\n2019-08-18,2,30,3\n2019-08-19,2,30,3\n2019-08-20,2,30,3\n2019-08-21,2,30,3\n2019-08-22,2,30,3\n2019-08-23,2,30,3\n2019-08-24,3,30,3\n2019-08-25,3,30,3\n2019-08-26,3,30,3\n2019-08-27,3,30,3\n2019-08-28,3,30,3\n2019-08-29,2,30,3\n2019-08-30,2,30,3\n2019-08-31,2,30,3\n2019-09-01,3,30,3\n2019-09-02,3,30,3\n2019-09-03,3,30,3\n2019-09-04,3,30,3\n2019-09-05,3,30,3\n2019-09-06,3,30,3\n2019-09-07,3,30,3\n2019-09-08,3,30,3\n2019-09-09,3,30,3\n2019-09-10,3,30,3\n2019-09-11,3,30,3\n2019-09-12,3,30,3\n2019-09-13,2,30,3\n2019-09-14,2,30,3\n2019-09-15,2,30,3\n2019-09-16,1,30,3\n2019-09-17,1,30,3\n2019-09-18,1,30,3\n2019-09-19,1,30,3\n2019-09-20,1,30,3\n2019-09-21,1,30,3\n2019-09-22,1,30,3\n2019-09-23,1,30,3\n2019-09-24,1,30,3\n2019-09-25,1,30,3\n2019-09-26,2,30,3\n2019-09-27,3,30,3\n2019-09-28,3,30,3\n2019-09-29,4,30,3\n2019-09-30,5,30,3\n2019-10-01,3,30,3\n2019-10-02,4,30,3\n2019-10-03,4,30,3\n2019-10-04,7,30,3\n2019-10-05,7,30,3\n2019-10-06,9,30,3\n2019-10-07,9,30,3\n2019-10-08,9,30,3\n2019-10-09,9,30,3\n2019-10-10,9,30,3\n2019-10-11,9,30,3\n2019-10-12,9,30,3\n2019-10-13,10,30,3\n2019-10-14,10,30,3\n2019-10-15,11,30,3\n2019-10-16,10,30,3\n2019-10-17,10,30,3\n2019-10-18,10,30,3\n2019-10-19,10,30,3\n2019-10-20,10,30,3\n2019-10-21,10,30,3\n2019-10-22,11,30,3\n2019-10-23,11,30,3\n2019-10-24,11,30,3\n2019-10-25,11,30,3\n2019-10-26,10,30,3\n2019-10-27,11,30,3\n2019-10-28,10,30,3\n2019-10-29,10,30,3\n2019-10-30,10,30,3\n2019-10-31,10,30,3\n2019-11-01,8,30,3\n2019-11-02,8,30,3\n2019-11-03,8,30,3\n2019-11-04,7,30,3\n2019-11-05,6,30,3\n2019-11-06,6,30,3\n2019-11-07,6,30,3\n2019-11-08,6,30,3\n2019-11-09,7,30,3\n2019-11-10,6,30,3\n2019-11-11,5,30,3\n2019-11-12,6,30,3\n2019-11-13,6,30,3\n2019-11-14,6,30,3\n2019-11-15,7,30,3\n2019-11-16,7,30,3\n2019-11-17,7,30,3\n2019-11-18,7,30,3\n2019-11-19,7,30,3\n2019-11-20,8,30,3\n2019-11-21,7,30,3\n2019-11-22,7,30,3\n2019-11-23,7,30,3\n2019-11-24,6,30,3\n2019-11-25,6,30,3\n2019-11-26,6,30,3\n2019-11-27,6,30,3\n2019-11-28,5,30,3\n";
+    var dateDataCSV = "key,value\n2018-11-08,v59\n2018-11-19,v60\n2018-11-25,v61\n2018-11-28,v62\n2018-11-29,v63\n2019-03-05,v64\n2019-03-21,v65\n2019-03-21,v66\n2019-03-23,v67\n2019-03-28,v68\n2019-04-01,v69\n2019-04-05,v70\n2019-04-05,v71\n2019-04-06,v72\n2019-04-30,v73\n2019-05-03,v74\n2019-05-05,v75\n2019-05-05,v76\n2019-06-07,v77\n2019-06-07,v78\n2019-06-08,v79\n2019-06-19,v80\n2019-06-29,v81\n2019-07-07,v82\n2019-07-29,v83\n2019-08-06,v84\n2019-08-13,v85\n2019-08-15,v86\n2019-08-16,v87\n2019-08-16,v88\n2019-08-21,v89\n2019-08-23,v90\n2019-08-25,v91\n2019-08-31,v92\n2019-09-16,v93\n2019-09-18,v94\n2019-09-25,v95\n2019-09-26,v96\n2019-10-25,v97\n2019-10-25,v98\n2019-10-28,v99\n2019-11-20,v100\n";
+
+    const data = d3.csvParse(dataCSV, function(d) {
+      return {
+        key: new Date(d.key), // lowercase and convert "Year" to Date
+        value: +d.value, // lowercase and convert "Length" to number
+        backfill: +d.backfill
+      };
+    });
+    const dateData = d3.csvParse(dateDataCSV, function(d) {
+      return {
+        key: new Date(d.key), // convert "key" to Date
+        value: d.value // convert "value" to number
+      };
+    });
+    // Define defautl parameters for the graph
+    var _margin = {
+      top: 80,
+      right: 140,
+      bottom: 60,
+      left: 60
+    };
+    var _width = 1200;
+    var _height = 800;
+    var _lineWidth = 1.5;
+    var _lineColor = 'steelblue';
+    var _lineColors = ['steelblue'];
+    var _isCurve = true;
+    var _tickSize = 5;
+    var _tickPadding = 5;
+    //const d3 = d3n.d3;
+
+    const width = _width - _margin.left - _margin.right;
+    const height = _height - _margin.top - _margin.bottom;
+
+    const svg1 = d3.select("body").select("#chart").append("svg")
+      .attr("width", _width)
+      .attr("height", _height);
+    const svg = svg1
+      .append('g')
+      .attr('transform', `translate(${_margin.left}, ${_margin.top})`);
+
+    const g = svg.append('g');
+
+    const {
+      allKeys
+    } = data;
+    console.log("Extent function on " + {
+      allKeys
+    });
+    // scale date for x-axis
+    const xScale = d3.scaleTime()
+      .domain(allKeys ? d3.extent(allKeys) : d3.extent(data, d => d.key))
+      .range([0, width]);
+    // scale for y-axis
+    const yScale = d3.scaleLinear()
+      .domain([0, d3.max(data, v => v.value)])
+      .rangeRound([height, 0]);
+    // define x-axis
+    const xAxis = d3.axisBottom(xScale)
+      .tickSize(_tickSize)
+      .tickFormat(d3.timeFormat("%y-%m-%d"))
+      .tickPadding(_tickPadding);
+    // define y-axi
+    const yAxis = d3.axisLeft(yScale)
+      .tickSize(_tickSize)
+      .tickPadding(_tickPadding);
+
+    var xx = g.append('g')
+      .attr('transform', `translate(0, ${height})`)
+      .call(xAxis);
+
+    g.append('g').call(yAxis);
+
+    // Const for creating a line chart
+    const lineChart = d3.line()
+      .x(function(d) {
+        var x = xScale(d.key);
+        return x;
+      })
+      .y(function(d) {
+        var y = yScale(d.value);
+        return y;
+      });
+    // Create an area chart, basically the same a line chart wtih are underneath coloured
+    const areaChart = d3.area()
+      .x(function(d) {
+        var x = xScale(d.key);
+        return x;
+      })
+      .y0(height)
+      .y1(function(d) {
+        var y = yScale(d.value);
+        return y;
+      });
+
+    if (_isCurve) lineChart.curve(d3.curveBasis);
+
+    // Add zoom in and zoom out functionality
+    // Add a clipPath: everything out of this area won't be drawn.
+    var clip = svg.append("defs").append("svg:clipPath")
+      .attr("id", "clip")
+      .append("svg:rect")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("x", 0)
+      .attr("y", 0);
+
+    // Add brushing
+    var brush = d3.brushX() // Add the brush feature using the d3.brush function
+      .extent([
+        [0, 0],
+        [width, height]
+      ]) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
+      .on("end", updateChart) // Each time the brush selection changes, trigger the 'updateChart' function
+      .on("brush", brushed);
+    // Draw the area chart itself
+    var area = g.append('g')
+      .attr("clip-path", "url(#clip)")
+      .attr('fill', 'none')
+      .attr('stroke-width', _lineWidth);
+    area
+      .selectAll('path')
+      .data(allKeys ? data : [data])
+      .enter().append("path")
+      .attr("class", "myArea")
+      .attr("fill", "#cce5df")
+      .attr('stroke', (d, i) => i < _lineColors.length ? _lineColors[i] : _lineColor)
+      .attr('d', areaChart);
+
+    var lines = svg.append("g")
+      .attr("clip-path", "url(#clip)");
+    // lines.selectAll('line')
+    //   .date(dateData)
+    //   .enter()
+    //   .append("line")
+    //     .attr("class", "myLine")
+    //     .attr("x1", (d,i) => xScale(d.key))
+    //     .attr("y1", 0)
+    //     .attr("x2", (d,i) => xScale(d.key)) //<<== and here
+    //     .attr("y2", height)
+    //     .style("stroke-width", 1)
+    //     .style("stroke", "palevioletred")
+    //     .style("fill", "none");
+    // Create a vertical line for each release on the date x-axis
+    for (var i = 0; i < dateData.length; i++) {
+      //console.log(dateData[i].key);
+      lines
+        .append("line")
+        .attr("class", "myLine" + i)
+        .attr("x1", xScale(dateData[i].key))
+        .attr("y1", 0)
+        .attr("x2", xScale(dateData[i].key)) //<<== and here
+        .attr("y2", height)
+        .style("stroke-width", 1)
+        .style("stroke", "palevioletred")
+        .style("fill", "none");
+
+    }
+
+
+    // Add labels
+    svg.append("text") // text label for the x-axis
+      .attr("x", width / 2)
+      .attr("y", height + 10 + _margin.bottom / 2)
+      .style("text-anchor", "middle")
+      .style("font-size", "16px")
+      .text("Date");
+
+    svg.append("text") // text label for the y-axis
+      .attr("y", 20 - _margin.left)
+      .attr("x", 50 - (height / 2))
+      .attr("transform", "rotate(-90)")
+      .style("text-anchor", "end")
+      .style("font-size", "16px")
+      .text("Active team size");
+
+    svg.append("text") // text label for chart Title
+      .attr("x", width / 2)
+      .attr("y", 0 - (_margin.top / 2))
+      .style("text-anchor", "middle")
+      .style("font-size", "16px")
+      .style("text-decoration", "underline")
+      .text("Active team size vs Time (3 commits in last 30 days threshold)");
+
+    // define bisector function to get the closes value on x-axis
+    var bisect = d3.bisector(function(d) {
+      return d.key;
+    }).left;
+
+    // Create the circle that travels along the curve of chart
+    var focus = svg
+      .append('g')
+      .append('circle')
+      .style("fill", "none")
+      .attr("stroke", "black")
+      .attr('r', 8.5)
+      .style("opacity", 0);
+    // Create the text that travels along the curve of chart
+    var focusText = svg
+      .append('g')
+      .append('text')
+      .style("opacity", 0)
+      .attr("text-anchor", "left")
+      .attr("alignment-baseline", "middle");
+    // Create the text that shows the next release
+    var focusRelease = svg
+      .append('g')
+      .append('text')
+      .style("opacity", 0)
+      .attr("text-anchor", "left")
+      .attr("alignment-baseline", "middle");
+
+    // Add the brushing
+    //rect
+    var context = svg
+      .append("g");
+
+    context.attr("class", "brush")
+      .call(brush);
+
+    context.selectAll(".overlay")
+      .on("mouseover", mouseover)
+      .on("mouseout", mouseout)
+      .on("mousemove", mousemove);
+    //.on("mouseup", mouseup);
+
+    context.selectAll(".selection")
+      .on("mouseover", mouseover);
+    // What happens when the mouse move -> show the annotations at the right positions.
+    function mouseover() {
+      focus.style("opacity", 1);
+      focusText.style("opacity", 1);
+      focusRelease.style("opacity", 1);
+    }
+
+    // function mouseup(){
+    //          area.select(".brush").call(brush.move, null) // This remove the grey brush area as soon as the selection has been done
+
+    // }
+
+    function mousemove() {
+      // recover coordinate we need
+      console.log("in mouse move");
+      var x0 = xScale.invert(d3.mouse(this)[0]);
+      var i = bisect(data, x0, 1);
+      var selectedData = data[i];
+      var x02 = xScale.invert(d3.mouse(this)[0]);
+      var i2 = bisect(dateData, x02, 0);
+      var selectedData2 = dateData[i2];
+      focus
+        .attr("cx", xScale(selectedData.key))
+        .attr("cy", yScale(selectedData.value));
+      focusText
+        .html("x:" + selectedData.key.toDateString() + "  -  " + "y:" + selectedData.value)
+        .attr("x", xScale(selectedData.key) + 15)
+        .attr("y", yScale(selectedData.value));
+      focusRelease
+        .html(selectedData2.value)
+        .attr("x", xScale(selectedData2.key))
+        .attr("y", -5);
+    }
+    // On mouse out, hide the text and cursor
+    function mouseout() {
+      focus.style("opacity", 0)
+      focusText.style("opacity", 0);
+      focusRelease.style("opacity", 0);
+    }
+
+    // A function that set idleTimeOut to null
+    var idleTimeout;
+
+    function idled() {
+      idleTimeout = null;
+    }
+
+    // A function that update the chart for given boundaries
+    function updateChart() {
+      console.log("update chart");
+
+      // What are the selected boundaries?
+      extent = d3.event.selection;
+
+      // If no selection, back to initial coordinate. Otherwise, update X axis domain
+      if (!extent) {
+        if (!idleTimeout) return idleTimeout = setTimeout(idled, 350); // This allows to wait a little bit
+        xScale.domain([4, 8]);
+        console.log("no extent");
+      } else {
+        xScale.domain([xScale.invert(extent[0]), xScale.invert(extent[1])])
+        context.call(brush.move, null) // This remove the grey brush area as soon as the selection has been done
+      }
+      // Update axis and area position
+      xx.transition().duration(1000).call(xAxis)
+      area
+        .select('.myArea')
+        .transition()
+        .duration(1000)
+        .attr("d", areaChart);
+      for (var i = 0; i < dateData.length; i++) {
+        lines
+          .select('.myLine' + i)
+          .transition()
+          .duration(1000)
+          .attr("x1", xScale(dateData[i].key))
+          .attr("x2", xScale(dateData[i].key)) //<<== and here;
+
+      }
+    }
+
+    function brushed() {
+      console.log("in brushed")
+      var x0 = xScale.invert(d3.mouse(this)[0]);
+      var i = bisect(data, x0, 1);
+      var selectedData = data[i];
+      var x02 = xScale.invert(d3.mouse(this)[0]);
+      var i2 = bisect(dateData, x02, 0);
+      var selectedData2 = dateData[i2];
+      focus
+        .attr("cx", xScale(selectedData.key))
+        .attr("cy", yScale(selectedData.value));
+      focusText
+        .html("x:" + selectedData.key.toDateString() + "  -  " + "y:" + selectedData.value)
+        .attr("x", xScale(selectedData.key) + 15)
+        .attr("y", yScale(selectedData.value));
+      focusRelease
+        .html(selectedData2.value)
+        .attr("x", xScale(selectedData2.key))
+        .attr("y", -5);
+    }
+
+    // If user double click, reinitialize the chart
+    svg.on("dblclick", function() {
+      console.log("User pressed double click");
+      xScale.domain(d3.extent(data, function(d) {
+        return d.key;
+      }))
+      xx.transition().call(xAxis)
+      area
+        .select('.myArea')
+        .transition()
+        .attr("d", areaChart);
+      for (var i = 0; i < dateData.length; i++) {
+        lines
+          .select('.myLine' + i)
+          .transition()
+          .attr("x1", xScale(dateData[i].key))
+          .attr("x2", xScale(dateData[i].key)) //<<== and here;
+
+      }
+    });
+
+  });
+</script>
+</body>
+</html>
