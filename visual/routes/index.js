@@ -16,11 +16,11 @@ const path = require("path");
 router.get('/', function(req, res, next) {
   var splitArr = [];
   if (req.app.locals.dropdownVals.length == 0) {
-    splitArr = ["no-input", "no-input",-1];
+    splitArr = ["no-input", "no-input",-1,-1];
   } else {
     splitArr = req.app.locals.dropdownVals[0].split(",");
   }
-  readTeamSizePoints(splitArr[1], splitArr[0],splitArr[2], function(csvArr) {
+  readTeamSizePoints(splitArr[1], splitArr[0],splitArr[2],splitArr[3], function(csvArr) {
     console.log("Read DB success\n")
     //console.log("CSVARR")
     //console.log(csvArr);
@@ -28,13 +28,8 @@ router.get('/', function(req, res, next) {
       return {
         key: new Date(d.key), // lowercase and convert "Year" to Date
         value: +d.value, // lowercase and convert "Length" to number
-        backfill: +d.backfill
-      };
-    });
-    const dataDateVSRelease = d3.csvParse(csvArr[1], function(d) {
-      return {
-        key: new Date(d.key), // lowercase and convert "Year" to Date
-        value: d.value // lowercase and convert "Length" to number
+        backfill: +d.backfill,
+        threshold: +d.threshold
       };
     });
     var backfill= "unknown";
@@ -49,7 +44,8 @@ router.get('/', function(req, res, next) {
       dataFromNode: csvArr[0],
       dateDataFromNode: csvArr[1],
       dropdownVals: req.app.locals.dropdownVals,
-      backfill: splitArr[2]
+      backfill: splitArr[2],
+      threshold: splitArr[3]
     });
   });
 });
@@ -65,22 +61,8 @@ String.prototype.format = function() {
 
 router.get('/:repoName', function(req, res, next) {
   var splitArr = req.body.repoName.split(",");
-  readTeamSizePoints(splitArr[1], splitArr[0],splitArr[2], function(csvArr) {
+  readTeamSizePoints(splitArr[1], splitArr[0],splitArr[2],splitArr[3], function(csvArr) {
     console.log("Read DB success\n")
-    //console.log("CSVARR")
-    //console.log(csvArr);
-    const dataDateVSSize = d3.csvParse(csvArr[0], function(d) {
-      return {
-        key: new Date(d.key), // lowercase and convert "Year" to Date
-        value: +d.value // lowercase and convert "Length" to number
-      };
-    });
-    const dataDateVSRelease = d3.csvParse(csvArr[1], function(d) {
-      return {
-        key: new Date(d.key), // lowercase and convert "Year" to Date
-        value: d.value // lowercase and convert "Length" to number
-      };
-    });
     res.render('index', {
       title: 'Express',
       repoName: splitArr[1],
@@ -88,7 +70,8 @@ router.get('/:repoName', function(req, res, next) {
       dataFromNode: csvArr[0],
       dateDataFromNode: csvArr[1],
       dropdownVals: req.app.locals.dropdownVals,
-      backfill:splitArr[2]
+      backfill:splitArr[2],
+      threshold:splitArr[3]
     });
   });
 
@@ -98,22 +81,8 @@ router.post("/test/submit", function(req, res, next) {
   repoName = req.body.repoName;
   console.log(repoName);
   var splitArr = req.body.repoName.split(",");
-  readTeamSizePoints(splitArr[1], splitArr[0],splitArr[2], function(csvArr) {
+  readTeamSizePoints(splitArr[1], splitArr[0],splitArr[2],splitArr[3], function(csvArr) {
     console.log("Read DB success\n")
-    //console.log("CSVARR")
-    //console.log(csvArr);
-    const dataDateVSSize = d3.csvParse(csvArr[0], function(d) {
-      return {
-        key: new Date(d.key), // lowercase and convert "Year" to Date
-        value: +d.value // lowercase and convert "Length" to number
-      };
-    });
-    const dataDateVSRelease = d3.csvParse(csvArr[1], function(d) {
-      return {
-        key: new Date(d.key), // lowercase and convert "Year" to Date
-        value: d.value // lowercase and convert "Length" to number
-      };
-    });
     res.render('index', {
       title: 'Express',
       repoName: splitArr[1],
@@ -121,23 +90,24 @@ router.post("/test/submit", function(req, res, next) {
       dataFromNode: csvArr[0],
       dateDataFromNode: csvArr[1],
       dropdownVals: req.app.locals.dropdownVals,
-      backfill:splitArr[2]
+      backfill:splitArr[2],
+      threshold:splitArr[3]
     });
   });
 });
 
 // Returns an array of size 2, array[0] is CSV string for active_team_size vs time points,  array[1] is CSV string for date vs release_name points
-function readTeamSizePoints(stringRepoName, stringRepoOwner, backfillInt, callBackFun) {
+function readTeamSizePoints(stringRepoName, stringRepoOwner, backfillInt, thresholdInt, callBackFun) {
   let stringQuery1 = " ";
-  if (backfillInt < 0) {
-    stringQuery1 = "SELECT date, team_size,time_delta  FROM active_team_size_vs_time WHERE repo_name=\'{0}\' AND repo_owner=\'{1}\' ORDER BY date ASC\n".format(stringRepoName, stringRepoOwner);
+  if (backfillInt < 0 || thresholdInt < 0) {
+    stringQuery1 = "SELECT date, team_size,time_delta,threshold  FROM active_team_size_vs_time WHERE repo_name=\'{0}\' AND repo_owner=\'{1}\' ORDER BY date ASC\n".format(stringRepoName, stringRepoOwner);
   } else {
-    stringQuery1 = "SELECT date, team_size,time_delta  FROM active_team_size_vs_time WHERE repo_name=\'{0}\' AND repo_owner=\'{1}\' AND time_delta=\'{2}\' ORDER BY date ASC\n".format(stringRepoName, stringRepoOwner, backfillInt);
+    stringQuery1 = "SELECT date, team_size,time_delta,threshold  FROM active_team_size_vs_time WHERE repo_name=\'{0}\' AND repo_owner=\'{1}\' AND time_delta=\'{2}\' AND threshold=\'{3}\' ORDER BY date ASC\n".format(stringRepoName, stringRepoOwner, backfillInt,thresholdInt);
   }
   console.log(stringQuery1);
   let stringQuery2 = "SELECT date, release_name FROM release_table WHERE repo_name=\'{0}\' AND repo_owner=\'{1}\' ORDER BY date ASC\n".format(stringRepoName, stringRepoOwner);
   console.log(stringQuery2);
-  var stringCSV1 = "key,value,backfill\n";
+  var stringCSV1 = "key,value,backfill,threshold\n";
   var stringCSV2 = "key,value\n";
   db.query(stringQuery1, (err1, result1) => {
     if (err1) {
@@ -153,7 +123,7 @@ function readTeamSizePoints(stringRepoName, stringRepoOwner, backfillInt, callBa
         var row = result1[i];
         //console.log("row out ");
         // console.log(row);
-        stringCSV1 = stringCSV1.concat("{0},{1},{2}\n".format(row.date, row.team_size, row.time_delta));
+        stringCSV1 = stringCSV1.concat("{0},{1},{2},{3}\n".format(row.date, row.team_size, row.time_delta,row.threshold));
       };
 
       for (var i = 0; i < result2.length; i++) {

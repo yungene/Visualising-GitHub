@@ -215,7 +215,7 @@
       .style("text-anchor", "middle")
       .style("font-size", "16px")
       .style("text-decoration", "underline")
-      .text("Active team size vs Time (2 commits in last <%= backfill %> days threshold)");
+      .text("Active team size vs Time (<%= threshold %> commits in last <%= backfill %> days threshold)");
 
     // define bisector function to get the closes value on x-axis
     var bisect = d3.bisector(function(d) {

@@ -38,7 +38,7 @@ public class DataCollector {
 	int exponentialBackoffMultiplier = 2;
 	int exponentialBackoffLimit = (int) Math.pow(exponentialBackoffMultiplier, 10);
 	int timeInterval; // days
-	int commitThreshold = 2; // commits
+	int commitThreshold; // commits
 	int daysToProcess = 400; // days to process
 
 	static class Contributor {
@@ -52,14 +52,14 @@ public class DataCollector {
 		}
 	}
 
-	public DataCollector(Connection conn, GitHubClient client, String repo, String repoOwner, int timeInterval) throws SQLException {
+	public DataCollector(Connection conn, GitHubClient client, String repo, String repoOwner, int timeInterval, int commitThreshold) throws SQLException {
 		super();
 		this.conn = conn;
 		this.client = client;
 		this.repo = repo;
 		this.repoOwner = repoOwner;
 		this.timeInterval = timeInterval;
-
+		this.commitThreshold = commitThreshold;
 		System.out.printf("Created a new DataCollector for repo:%s by user:%s\n", repo, repoOwner);
 	}
 
@@ -75,8 +75,8 @@ public class DataCollector {
 				"INSERT IGNORE INTO release_table (repo_name,repo_owner,date,release_name) VALUES ('%s','%s',?,?);",
 				repo, repoOwner));
 				PreparedStatement setTeamSizeVSTime = conn.prepareStatement(
-						String.format("INSERT IGNORE INTO active_team_size_vs_time VALUES ('%s','%s',?,?,%d);", repo,
-								repoOwner, timeInterval));
+						String.format("INSERT IGNORE INTO active_team_size_vs_time VALUES ('%s','%s',?,?,%d,%d);", repo,
+								repoOwner, timeInterval, commitThreshold));
 				AutoCloseable finish = conn::rollback;) {
 
 			exponentialBackoffTime = 1;

@@ -2,6 +2,8 @@
 # mysql -u root -p < init.sql
 
 # An SQL script to initialise the database
+
+# drop database visualGithub;
 CREATE DATABASE IF NOT EXISTS visualGithub;
 USE visualGithub;
 
@@ -15,6 +17,15 @@ CREATE TABLE IF NOT EXISTS commit_size_vs_time (
 	PRIMARY KEY (repo_name,repo_owner,time_val)
 );
 
+CREATE TABLE IF NOT EXISTS repos_store (
+	repo_name 			VARCHAR(255) NOT NULL,
+	repo_owner 			VARCHAR(255) NOT NULL,
+	time_delta 			INT NOT NULL,
+	threshold			INT NOT NULL,
+	estimated_size		INT NOT NULL DEFAULT 0,
+	PRIMARY KEY (repo_name,repo_owner,time_delta,threshold)
+);
+
 # Create a table to store the repositories traversed
 CREATE TABLE IF NOT EXISTS repos_visited (
 	repo_name 			VARCHAR(255) NOT NULL,
@@ -22,8 +33,9 @@ CREATE TABLE IF NOT EXISTS repos_visited (
 	finished 			BOOLEAN NOT NULL DEFAULT FALSE,
 	start_time 			DATETIME,
 	finish_time 		DATETIME,
-	time_delta			INT 		 NOT NULL,
-	PRIMARY KEY (repo_name,repo_owner,time_delta)
+	time_delta			INT NOT NULL,
+	threshold			INT NOT NULL,
+	PRIMARY KEY (repo_name,repo_owner,time_delta,threshold)
 );
 
 CREATE TABLE IF NOT EXISTS active_team_size_vs_time (
@@ -32,7 +44,8 @@ CREATE TABLE IF NOT EXISTS active_team_size_vs_time (
 	date 				DATE 		 NOT NULL,
 	team_size 			INT UNSIGNED NOT NULL,
 	time_delta			INT 		 NOT NULL,
-	PRIMARY KEY (repo_name, repo_owner, date,time_delta)
+	threshold			INT NOT NULL,
+	PRIMARY KEY (repo_name, repo_owner, date, time_delta, threshold)
 );
 
 CREATE TABLE IF NOT EXISTS release_table (
