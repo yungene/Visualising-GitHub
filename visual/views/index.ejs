@@ -177,7 +177,7 @@
     //     .style("stroke", "palevioletred")
     //     .style("fill", "none");
     // Create a vertical line for each release on the date x-axis
-    for (var i = 0; i < dateData.length; i++) {
+ for (var i = 0; i < dateData.length; i++) {
       //console.log(dateData[i].key);
       lines
         .append("line")
@@ -215,7 +215,7 @@
       .style("text-anchor", "middle")
       .style("font-size", "16px")
       .style("text-decoration", "underline")
-      .text("Active team size vs Time (<%= threshold %> commits in last <%= backfill %> days threshold)");
+      .text("Active team size vs Time (3 commits in last 30 days threshold)");
 
     // define bisector function to get the closes value on x-axis
     var bisect = d3.bisector(function(d) {
@@ -282,6 +282,7 @@
       var x02 = xScale.invert(d3.mouse(this)[0]);
       var i2 = bisect(dateData, x02, 0);
       var selectedData2 = dateData[i2];
+      if(selectedData){
       focus
         .attr("cx", xScale(selectedData.key))
         .attr("cy", yScale(selectedData.value));
@@ -289,10 +290,13 @@
         .html("x:" + selectedData.key.toDateString() + "  -  " + "y:" + selectedData.value)
         .attr("x", xScale(selectedData.key) + 15)
         .attr("y", yScale(selectedData.value));
+      }
+      if (selectedData2){
       focusRelease
         .html(selectedData2.value)
         .attr("x", xScale(selectedData2.key))
         .attr("y", -5);
+      }
     }
     // On mouse out, hide the text and cursor
     function mouseout() {
@@ -350,17 +354,21 @@
       var x02 = xScale.invert(d3.mouse(this)[0]);
       var i2 = bisect(dateData, x02, 0);
       var selectedData2 = dateData[i2];
+      if(selectedData){
       focus
-        .attr("cx", xScale(selectedData.key))
+        .attr("cx", selectedData?xScale(selectedData.key):xScale.range()[1])
         .attr("cy", yScale(selectedData.value));
       focusText
         .html("x:" + selectedData.key.toDateString() + "  -  " + "y:" + selectedData.value)
-        .attr("x", xScale(selectedData.key) + 15)
-        .attr("y", yScale(selectedData.value));
+        .attr("x", selectedData?xScale(selectedData.key) + 15:xScale.range()[1]+15)
+        .attr("y", selectedData?yScale(selectedData.value):yAxis.range()[1]);
+      }
+      if(selectedData2){
       focusRelease
-        .html(selectedData2.value)
-        .attr("x", xScale(selectedData2.key))
+        .html(selectedData2?selectedData2.value:"")
+        .attr("x", selectedData2?xScale(selectedData2.key):xScale.range()[1])
         .attr("y", -5);
+      }
     }
 
     // If user double click, reinitialize the chart

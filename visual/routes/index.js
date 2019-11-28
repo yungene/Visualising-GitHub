@@ -38,7 +38,7 @@ router.get('/', function(req, res, next) {
     }
 
     res.render('index', {
-      title: 'Express',
+      title: 'J.C. Demo',
       repoName: splitArr[1],
       repoOwner: splitArr[0],
       dataFromNode: csvArr[0],
@@ -64,7 +64,7 @@ router.get('/:repoName', function(req, res, next) {
   readTeamSizePoints(splitArr[1], splitArr[0],splitArr[2],splitArr[3], function(csvArr) {
     console.log("Read DB success\n")
     res.render('index', {
-      title: 'Express',
+      title: 'J.C. Demo',
       repoName: splitArr[1],
       repoOwner: splitArr[0],
       dataFromNode: csvArr[0],
@@ -84,7 +84,7 @@ router.post("/test/submit", function(req, res, next) {
   readTeamSizePoints(splitArr[1], splitArr[0],splitArr[2],splitArr[3], function(csvArr) {
     console.log("Read DB success\n")
     res.render('index', {
-      title: 'Express',
+      title: 'J.C. Demo',
       repoName: splitArr[1],
       repoOwner: splitArr[0],
       dataFromNode: csvArr[0],

@@ -1,40 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Express</title>
+  <title>J.C.-Demo</title>
   <link rel='stylesheet' href='/stylesheets/style.css' />
   
 </head>
 
 <body>
-  <h1>D3 Server-side Demo</h1>
-  <h2>Date axis test</h2>
+  <h1>SWEng CS3012 Demo</h1>
   <form action="/test/submit" method="post">
   <select class="form-control" id="sel1" name="repoName">
-  
-     <option value='neoclide,coc.nvim,30,3' >neoclide,coc.nvim,30,3</option>
-  
-     <option value='google,filament,15,2' >google,filament,15,2</option>
-  
-     <option value='google,filament,30,3' >google,filament,30,3</option>
-  
-     <option value='ginuerzh,gost,15,2' >ginuerzh,gost,15,2</option>
-  
-     <option value='ginuerzh,gost,30,3' >ginuerzh,gost,30,3</option>
-  
-     <option value='google,jax,15,2' >google,jax,15,2</option>
-  
-     <option value='google,jax,30,3' >google,jax,30,3</option>
-  
-     <option value='Anuken,Mindustry,15,2' >Anuken,Mindustry,15,2</option>
-  
      <option value='Anuken,Mindustry,30,3' >Anuken,Mindustry,30,3</option>
-  
-     <option value='kivy,python-for-android,30,3' >kivy,python-for-android,30,3</option>
-  
-     <option value='sveltejs,svelte,15,2' >sveltejs,svelte,15,2</option>
-  
-     <option value='sveltejs,svelte,30,3' >sveltejs,svelte,30,3</option>
   
   </select>
   <input type='submit' name="submit"/>
@@ -45,7 +21,7 @@
     <h2>Data for repo:Mindustry by owner:Anuken</h2>
     <div id="chart"></div>
   </div>
-  <script src="https://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+   <script src="https://d3js.org/d3.v5.min.js" charset="utf-8"></script>
   <script type="text/javascript">
   // Add event listener to only execute JS after the page is loaded
   document.addEventListener('DOMContentLoaded', function(e) {
@@ -197,7 +173,7 @@
     //     .style("stroke", "palevioletred")
     //     .style("fill", "none");
     // Create a vertical line for each release on the date x-axis
-    for (var i = 0; i < dateData.length; i++) {
+     for (var i = 0; i < dateData.length; i++) {
       //console.log(dateData[i].key);
       lines
         .append("line")
@@ -302,6 +278,7 @@
       var x02 = xScale.invert(d3.mouse(this)[0]);
       var i2 = bisect(dateData, x02, 0);
       var selectedData2 = dateData[i2];
+      if(selectedData){
       focus
         .attr("cx", xScale(selectedData.key))
         .attr("cy", yScale(selectedData.value));
@@ -309,10 +286,13 @@
         .html("x:" + selectedData.key.toDateString() + "  -  " + "y:" + selectedData.value)
         .attr("x", xScale(selectedData.key) + 15)
         .attr("y", yScale(selectedData.value));
+      }
+      if (selectedData2){
       focusRelease
         .html(selectedData2.value)
         .attr("x", xScale(selectedData2.key))
         .attr("y", -5);
+      }
     }
     // On mouse out, hide the text and cursor
     function mouseout() {
@@ -370,17 +350,21 @@
       var x02 = xScale.invert(d3.mouse(this)[0]);
       var i2 = bisect(dateData, x02, 0);
       var selectedData2 = dateData[i2];
+      if(selectedData){
       focus
-        .attr("cx", xScale(selectedData.key))
+        .attr("cx", selectedData?xScale(selectedData.key):xScale.range()[1])
         .attr("cy", yScale(selectedData.value));
       focusText
         .html("x:" + selectedData.key.toDateString() + "  -  " + "y:" + selectedData.value)
-        .attr("x", xScale(selectedData.key) + 15)
-        .attr("y", yScale(selectedData.value));
+        .attr("x", selectedData?xScale(selectedData.key) + 15:xScale.range()[1]+15)
+        .attr("y", selectedData?yScale(selectedData.value):yAxis.range()[1]);
+      }
+      if(selectedData2){
       focusRelease
-        .html(selectedData2.value)
-        .attr("x", xScale(selectedData2.key))
+        .html(selectedData2?selectedData2.value:"")
+        .attr("x", selectedData2?xScale(selectedData2.key):xScale.range()[1])
         .attr("y", -5);
+      }
     }
 
     // If user double click, reinitialize the chart
@@ -408,3 +392,4 @@
 </script>
 </body>
 </html>
+
