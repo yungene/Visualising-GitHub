@@ -88,7 +88,7 @@
       .range([0, width]);
     // scale for y-axis
     const yScale = d3.scaleLinear()
-      .domain(allKeys ? [d3.min(data, d => d3.min(d, v => v.value)), d3.max(data, d => d3.max(d, v => v.value))] : d3.extent(data, d => d.value))
+      .domain([0, d3.max(data, v => v.value)])
       .rangeRound([height, 0]);
     // define x-axis
     const xAxis = d3.axisBottom(xScale)
