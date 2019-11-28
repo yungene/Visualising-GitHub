@@ -6,7 +6,7 @@ CS3012 - "Social Graph"
 Important links:
 
 * [Design Doc](/DesignDoc.md)
-* [Sample static html page with prefetched data for one of the repositories](/static-demo-page/index.html)
+* DEMO - [Sample static html page with prefetched data for one of the repositories](https://yungene.github.io/) OR see in /static-demo-page/index.html
 *
 
 
