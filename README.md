@@ -3,6 +3,7 @@ CS3012 - "Social Graph"
 ## Part 1 - GitHub Access
 
 Commit which identifies the solution to this part: bf944d30d144e70019e2a4b3d102234f17ec43b6
+Please, see 3146ffa8583af581a31880ea25903391a264513b for the program that allows OAuth2 token athorization.
 
 A little program under _/Github-acess_ demonstrates the use of Eclipse EGit Github library for Java to retrieve and display data about a Github's user repositories and the number of "watchers" for these public repositories. In this case, data about myself is retrieved and displayed. More details can be found in README in the directory of the program.
 
