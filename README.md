@@ -17,7 +17,20 @@ Task: _Interrogate the GitHub API to build visualisation of data available that 
 ### Project Information 
 _Note: Please see Design Doc for full description of the project and its development._
 
-The project visualises information about repositories on GitHub. At present, the only metric presented is a line (area) chart of active development team size vs time with releases (tags) also shown on a time axis. This visualisation indents to investigate whether there is correlation between active team size and time with respect to releases. Initial conjecture was that active team size will increase prior to release and will peak at the time of release and will decreases straight after the release. The project consists of three logical parts: data collector, database and website. Website extracts all the processed repositories from the database and presents it to user by means of a drop down menu. Data for the chosen repository will be read from the databse and presented to the user as an interactive graph. By hovering over the graph, the user can see the exact coordinates of each point and also see the release that this point is working towards.
+The project visualises information about repositories on GitHub. At present, the only metric presented is a line (area) chart of active development team size vs time with releases (tags) also shown on a time axis. This visualisation indents to investigate whether there is correlation between active team size and time with respect to releases. Initial conjecture was that active team size will increase prior to release and will peak at the time of release and will decreases straight after the release. The project consists of three logical parts: data collector, database and website. Website extracts all the processed repositories from the database and presents it to user by means of a drop down menu. Data for the chosen repository will be read from the database and presented to the user as an *interactive* graph. By hovering over the graph, the user can see the exact coordinates of each point and also see the release that this point is working towards. The user can zoom in by brushing on the graph. That is click and drag, and release to zoom in, inversely proportional to the area covered by the movement. Double click to reset the scaling.
+
+[Demo page.](https://yungene.github.io/) (With sample prefetched data. Original webpage includes a backedn and a database. Should be online and up to date.)
+
+Pattern that similar to that described by the conjecture:
+![Pattern that similar tot he conjecture.](/images/conjecture-pattern.png "Pattern that similar tot he conjecture.")
+
+Demonstration of the webpage, including select box, zoom in and cursor:
+![Demonstration of the webpage, including select box, zoom in and cursor.](/images/demo_select_box_cursor_zoom_in.gif "Demonstration of the webpage, including select box, zoom in and cursor.")
+
+#### Usage
+Use select box to select the desired reposiroty to be displayed. List is generated based on the data in the database. List names follow this format "repo_owner,repo_name,days_backfill,threshold". See the headings below and title of the graph for the parameters of the current graph. 
+This is a line (area) chart. It has three main components. Y-axis displays the active team size as measured using the metric described in the design doc. X-axis displays the time/date. Thus a change of team size with the respect to time is displayed. Red vertical lines represent individual releases (tags) in that repository. Tags are bound to the time values.
+This graph is *interactive*. Hover over a point to see the exact value as well as the name of the release this commit is conributing to. Name of the release is displayed above the release line. Additionally, brush on the graph to zoom in. Double click to reset the scaling. That is click and drag, and release to zoom in, inversely proportional to the area covered by the movement.
 
 TODO: Provide examples, screenshots, GIFs
 
@@ -42,7 +55,7 @@ TODO: allow to run a website without a database using some sample data.
 
 #### MySQL database
 
-- Create the DB and tables using the script under [/MySQL/init.sql](/MySQL/init.sql).
+- Create the DB and tables using the script under [/MySQL/init.sql](/MySQL/init.sql). Use [/MySQL/insert_sample_repos.sql](/MySQL/insert_sample_repos.sql) to insert a list of sample repos to the DB. THis list will be used by the data collector.
 - Create the database configs using your credentials for your local MySQL instance. Under [_/data-collector/_](/data-collector) create a _config_ folder. Under _/data\_collector/config/_ create a _dbconfig.properties_ file. Insert and modify the template: 
 ```
  host=localhost
