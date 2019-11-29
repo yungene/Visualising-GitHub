@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title><%= title %></title>
+  <link rel='stylesheet' href='/stylesheets/style.css' />
+  
+</head>
+
+<body>
+  <h1>SWEng CS3012 Demo</h1>
+  <h2>Usage</h2>
+  <p>Use select box to select the desired reposiroty to be displayed. List is generated based on the data in the database. List names follow this format "repo_owner,repo_name,days_backfill,threshold". See the headings below and title of the graph for the parameters of the current graph. </p>
+  <p>This is a line (area) chart. It has three main components. Y-axis displays the active team size as measured using the metric described in the design doc. X-axis displays the time/date. Thus a change of team size with the respect to time is displayed. Red vertical lines represent individual releases (tags) in that repository. Tags are bound to the time values. </p>
+  <p>This graph is <b>interactive</b>. Hover over a point to see the exact value as well as the name of the release this commit is conributing to. Name of the release is displayed above the release line. Additionally, brush on the graph to zoom in. Double click to reset the scaling. That is click and drag, and release to zoom in, inversely proportional to the area covered by the movement.</p>
+  <form action="/test/submit" method="post">
+  <select class="form-control" id="sel1" name="repoName">
+  <% for(var i=0; i < dropdownVals.length; i++) { %>
+     <option value='<%= dropdownVals[i] %>' ><%= dropdownVals[i] %></option>
+  <% } %>
+  </select>
+  <input type='submit' name="submit"/>
+  </form>
+  <br>
+  <%-
+  //line.getDateLine(csvArr);
+  %>
+  <div id="container">
+    <h1>Data for repo:<%= repoName %> by owner:<%= repoOwner %></h1>
+    <div id="chart"></div>
+  </div>
+  <script src="https://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+  <script type="text/javascript">
+  // Add event listener to only execute JS after the page is loaded
+  document.addEventListener('DOMContentLoaded', function(e) {
+    //vars
+    // Convert the CSV received from backend into a valid JS array
+    var dataCSV = <%- JSON.stringify(dataFromNode) %>;
+    var dateDataCSV = <%- JSON.stringify(dateDataFromNode) %>;
+
+    const data = d3.csvParse(dataCSV, function(d) {
+      return {
+        key: new Date(d.key), // lowercase and convert "Year" to Date
+        value: +d.value, // lowercase and convert "Length" to number
+        backfill: +d.backfill
+      };
+    });
+    const dateData = d3.csvParse(dateDataCSV, function(d) {
+      return {
+        key: new Date(d.key), // convert "key" to Date
+        value: d.value // convert "value" to number
+      };
+    });
+    // Define defautl parameters for the graph
+    var _margin = {
+      top: 80,
+      right: 140,
+      bottom: 60,
+      left: 60
+    };
+    var _width = 1200;
+    var _height = 800;
+    var _lineWidth = 1.5;
+    var _lineColor = 'steelblue';
+    var _lineColors = ['steelblue'];
+    var _isCurve = true;
+    var _tickSize = 5;
+    var _tickPadding = 5;
+    //const d3 = d3n.d3;
+
+    const width = _width - _margin.left - _margin.right;
+    const height = _height - _margin.top - _margin.bottom;
+
+    const svg1 = d3.select("body").select("#chart").append("svg")
+      .attr("width", _width)
+      .attr("height", _height);
+    const svg = svg1
+      .append('g')
+      .attr('transform', `translate(${_margin.left}, ${_margin.top})`);
+
+    const g = svg.append('g');
+
+    const {
+      allKeys
+    } = data;
+    console.log("Extent function on " + {
+      allKeys
+    });
+    // scale date for x-axis
+    const xScale = d3.scaleTime()
+      .domain(allKeys ? d3.extent(allKeys) : d3.extent(data, d => d.key))
+      .range([0, width]);
+    // scale for y-axis
+    const yScale = d3.scaleLinear()
+      .domain([0, d3.max(data, v => v.value)])
+      .rangeRound([height, 0]);
+    // define x-axis
+    const xAxis = d3.axisBottom(xScale)
+      .tickSize(_tickSize)
+      .tickFormat(d3.timeFormat("%y-%m-%d"))
+      .tickPadding(_tickPadding);
+    // define y-axi
+    const yAxis = d3.axisLeft(yScale)
+      .tickSize(_tickSize)
+      .tickPadding(_tickPadding);
+
+    var xx = g.append('g')
+      .attr('transform', `translate(0, ${height})`)
+      .call(xAxis);
+
+    g.append('g').call(yAxis);
+
+    // Const for creating a line chart
+    const lineChart = d3.line()
+      .x(function(d) {
+        var x = xScale(d.key);
+        return x;
+      })
+      .y(function(d) {
+        var y = yScale(d.value);
+        return y;
+      });
+    // Create an area chart, basically the same a line chart wtih are underneath coloured
+    const areaChart = d3.area()
+      .x(function(d) {
+        var x = xScale(d.key);
+        return x;
+      })
+      .y0(height)
+      .y1(function(d) {
+        var y = yScale(d.value);
+        return y;
+      });
+
+    if (_isCurve) lineChart.curve(d3.curveBasis);
+
+    // Add zoom in and zoom out functionality
+    // Add a clipPath: everything out of this area won't be drawn.
+    var clip = svg.append("defs").append("svg:clipPath")
+      .attr("id", "clip")
+      .append("svg:rect")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("x", 0)
+      .attr("y", 0);
+
+    // Add brushing
+    var brush = d3.brushX() // Add the brush feature using the d3.brush function
+      .extent([
+        [0, 0],
+        [width, height]
+      ]) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
+      .on("end", updateChart) // Each time the brush selection changes, trigger the 'updateChart' function
+      .on("brush", brushed);
+    // Draw the area chart itself
+    var area = g.append('g')
+      .attr("clip-path", "url(#clip)")
+      .attr('fill', 'none')
+      .attr('stroke-width', _lineWidth);
+    area
+      .selectAll('path')
+      .data(allKeys ? data : [data])
+      .enter().append("path")
+      .attr("class", "myArea")
+      .attr("fill", "#cce5df")
+      .attr('stroke', (d, i) => i < _lineColors.length ? _lineColors[i] : _lineColor)
+      .attr('d', areaChart);
+
+    var lines = svg.append("g")
+      .attr("clip-path", "url(#clip)");
+    for (var i = 0; i < dateData.length; i++) {
+      //console.log(dateData[i].key);
+      lines
+        .append("line")
+        .attr("class", "myLine" + i)
+        .attr("x1", xScale(dateData[i].key))
+        .attr("y1", 0)
+        .attr("x2", xScale(dateData[i].key)) //<<== and here
+        .attr("y2", height)
+        .style("stroke-width", 1)
+        .style("stroke", "palevioletred")
+        .style("fill", "none");
+
+    }
+
+
+    // Add labels
+    svg.append("text") // text label for the x-axis
+      .attr("x", width / 2)
+      .attr("y", height + 10 + _margin.bottom / 2)
+      .style("text-anchor", "middle")
+      .style("font-size", "16px")
+      .text("Date");
+
+    svg.append("text") // text label for the y-axis
+      .attr("y", 20 - _margin.left)
+      .attr("x", 50 - (height / 2))
+      .attr("transform", "rotate(-90)")
+      .style("text-anchor", "end")
+      .style("font-size", "16px")
+      .text("Active team size");
+
+    svg.append("text") // text label for chart Title
+      .attr("x", width / 2)
+      .attr("y", 0 - (_margin.top / 2))
+      .style("text-anchor", "middle")
+      .style("font-size", "16px")
+      .style("text-decoration", "underline")
+      .text("Active team size vs Time (3 commits in last 30 days threshold)");
+
+    // define bisector function to get the closes value on x-axis
+    var bisect = d3.bisector(function(d) {
+      return d.key;
+    }).left;
+
+    // Create the circle that travels along the curve of chart
+    var focus = svg
+      .append('g')
+      .append('circle')
+      .style("fill", "none")
+      .attr("stroke", "black")
+      .attr('r', 8.5)
+      .style("opacity", 0);
+    // Create the text that travels along the curve of chart
+    var focusText = svg
+      .append('g')
+      .append('text')
+      .style("opacity", 0)
+      .attr("text-anchor", "left")
+      .attr("alignment-baseline", "middle");
+    // Create the text that shows the next release
+    var focusRelease = svg
+      .append('g')
+      .append('text')
+      .style("opacity", 0)
+      .attr("text-anchor", "left")
+      .attr("alignment-baseline", "middle");
+
+    // Add the brushing
+    //rect
+    var context = svg
+      .append("g");
+
+    context.attr("class", "brush")
+      .call(brush);
+
+    context.selectAll(".overlay")
+      .on("mouseover", mouseover)
+      .on("mouseout", mouseout)
+      .on("mousemove", mousemove);
+    //.on("mouseup", mouseup);
+
+    context.selectAll(".selection")
+      .on("mouseover", mouseover);
+    // What happens when the mouse move -> show the annotations at the right positions.
+    function mouseover() {
+      focus.style("opacity", 1);
+      focusText.style("opacity", 1);
+      focusRelease.style("opacity", 1);
+    }
+
+    // function mouseup(){
+    //          area.select(".brush").call(brush.move, null) // This remove the grey brush area as soon as the selection has been done
+
+    // }
+
+    function mousemove() {
+      // recover coordinate we need
+      console.log("in mouse move");
+      var x0 = xScale.invert(d3.mouse(this)[0]);
+      var i = bisect(data, x0, 1);
+      var selectedData = data[i];
+      var x02 = xScale.invert(d3.mouse(this)[0]);
+      var i2 = bisect(dateData, x02, 0);
+      var selectedData2 = dateData[i2];
+      if (selectedData) {
+        focus
+          .attr("cx", xScale(selectedData.key))
+          .attr("cy", yScale(selectedData.value));
+        focusText
+          .html("x:" + selectedData.key.toDateString() + "  -  " + "y:" + selectedData.value)
+          .attr("x", xScale(selectedData.key) + 15)
+          .attr("y", yScale(selectedData.value));
+      }
+      if (selectedData2) {
+        focusRelease
+          .html(selectedData2.value)
+          .attr("x", xScale(selectedData2.key))
+          .attr("y", -5);
+      }
+    }
+    // On mouse out, hide the text and cursor
+    function mouseout() {
+      focus.style("opacity", 0)
+      focusText.style("opacity", 0);
+      focusRelease.style("opacity", 0);
+    }
+
+    // A function that set idleTimeOut to null
+    var idleTimeout;
+
+    function idled() {
+      idleTimeout = null;
+    }
+
+    // A function that update the chart for given boundaries
+    function updateChart() {
+      console.log("update chart");
+
+      // What are the selected boundaries?
+      extent = d3.event.selection;
+
+      // If no selection, back to initial coordinate. Otherwise, update X axis domain
+      if (!extent) {
+        if (!idleTimeout) return idleTimeout = setTimeout(idled, 350); // This allows to wait a little bit
+        xScale.domain([4, 8]);
+        console.log("no extent");
+      } else {
+        xScale.domain([xScale.invert(extent[0]), xScale.invert(extent[1])])
+        context.call(brush.move, null) // This remove the grey brush area as soon as the selection has been done
+      }
+      // Update axis and area position
+      xx.transition().duration(1000).call(xAxis)
+      area
+        .select('.myArea')
+        .transition()
+        .duration(1000)
+        .attr("d", areaChart);
+      for (var i = 0; i < dateData.length; i++) {
+        lines
+          .select('.myLine' + i)
+          .transition()
+          .duration(1000)
+          .attr("x1", xScale(dateData[i].key))
+          .attr("x2", xScale(dateData[i].key)) //<<== and here;
+
+      }
+    }
+
+    // Activates when brush is moved.
+    function brushed() {
+      console.log("in brushed")
+      var x0 = xScale.invert(d3.mouse(this)[0]);
+      var i = bisect(data, x0, 1);
+      var selectedData = data[i];
+      var x02 = xScale.invert(d3.mouse(this)[0]);
+      var i2 = bisect(dateData, x02, 0);
+      var selectedData2 = dateData[i2];
+      if (selectedData) {
+        focus
+          .attr("cx", selectedData ? xScale(selectedData.key) : xScale.range()[1])
+          .attr("cy", yScale(selectedData.value));
+        focusText
+          .html("x:" + selectedData.key.toDateString() + "  -  " + "y:" + selectedData.value)
+          .attr("x", selectedData ? xScale(selectedData.key) + 15 : xScale.range()[1] + 15)
+          .attr("y", selectedData ? yScale(selectedData.value) : yAxis.range()[1]);
+      }
+      if (selectedData2) {
+        focusRelease
+          .html(selectedData2 ? selectedData2.value : "")
+          .attr("x", selectedData2 ? xScale(selectedData2.key) : xScale.range()[1])
+          .attr("y", -5);
+      }
+    }
+
+    // If user double click, reinitialize the chart
+    svg.on("dblclick", function() {
+      console.log("User pressed double click");
+      xScale.domain(d3.extent(data, function(d) {
+        return d.key;
+      }))
+      xx.transition().call(xAxis)
+      area
+        .select('.myArea')
+        .transition()
+        .attr("d", areaChart);
+      for (var i = 0; i < dateData.length; i++) {
+        lines
+          .select('.myLine' + i)
+          .transition()
+          .attr("x1", xScale(dateData[i].key))
+          .attr("x2", xScale(dateData[i].key)) //<<== and here;
+
+      }
+    });
+
+  });
+</script>
+</body>
+</html>
