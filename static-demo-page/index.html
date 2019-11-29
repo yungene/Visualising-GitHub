@@ -2,12 +2,28 @@
 <html>
 <head>
   <title>J.C.-Demo</title>
-  <link rel='stylesheet' href='/stylesheets/style.css' />
-  
+  <!-- <link rel='stylesheet' href='/stylesheets/style.css' /> -->
+  <style>
+ body {
+  background-color: #f5f5f5;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 12px;
+}
+.svg-chart .background {
+  shape-rendering: crispEdges;
+  stroke: #ccc;
+  fill: #fdfdfd;
+  stroke-width: 1px;
+}
+.svg-chart .bar { fill: #4682B4; }</style>
 </head>
 
 <body>
   <h1>SWEng CS3012 Demo</h1>
+  <h2>Usage</h2>
+  <p>Use select box to select the desired reposiroty to be displayed. List is generated based on the data in the database. List names follow this format "repo_owner,repo_name,days_backfill,threshold". See the headings below and title of the graph for the parameters of the current graph. </p>
+  <p>This is a line (area) chart. It has three main components. Y-axis displays the active team size as measured using the metric described in the design doc. X-axis displays the time/date. Thus a change of team size with the respect to time is displayed. Red vertical lines represent individual releases (tags) in that repository. Tags are bound to the time values. </p>
+  <p>This graph is <b>interactive</b>. Hover over a point to see the exact value as well as the name of the release this commit is conributing to. Name of the release is displayed above the release line. Additionally, brush on the graph to zoom in. Double click to reset the scaling. That is click and drag, and release to zoom in, inversely proportional to the area covered by the movement.</p>
   <form action="/test/submit" method="post">
   <select class="form-control" id="sel1" name="repoName">
      <option value='Anuken,Mindustry,30,3' >Anuken,Mindustry,30,3</option>

@@ -7,8 +7,11 @@
 </head>
 
 <body>
-  <h1>D3 Server-side Demo</h1>
-  <h2>Date axis test</h2>
+  <h1>SWEng CS3012 Demo</h1>
+  <h2>Usage</h2>
+  <p>Use select box to select the desired reposiroty to be displayed. List is generated based on the data in the database. List names follow this format "repo_owner,repo_name,days_backfill,threshold". See the headings below and title of the graph for the parameters of the current graph. </p>
+  <p>This is a line (area) chart. It has three main components. Y-axis displays the active team size as measured using the metric described in the design doc. X-axis displays the time/date. Thus a change of team size with the respect to time is displayed. Red vertical lines represent individual releases (tags) in that repository. Tags are bound to the time values. </p>
+  <p>This graph is <b>interactive</b>. Hover over a point to see the exact value as well as the name of the release this commit is conributing to. Name of the release is displayed above the release line. Additionally, brush on the graph to zoom in. Double click to reset the scaling. That is click and drag, and release to zoom in, inversely proportional to the area covered by the movement.</p>
   <form action="/test/submit" method="post">
   <select class="form-control" id="sel1" name="repoName">
   <% for(var i=0; i < dropdownVals.length; i++) { %>
@@ -22,7 +25,7 @@
   //line.getDateLine(csvArr);
   %>
   <div id="container">
-    <h2>Data for repo:<%= repoName %> by owner:<%= repoOwner %></h2>
+    <h1>Data for repo:<%= repoName %> by owner:<%= repoOwner %></h1>
     <div id="chart"></div>
   </div>
   <script src="https://d3js.org/d3.v5.min.js" charset="utf-8"></script>
@@ -164,19 +167,6 @@
 
     var lines = svg.append("g")
       .attr("clip-path", "url(#clip)");
-    // lines.selectAll('line')
-    //   .date(dateData)
-    //   .enter()
-    //   .append("line")
-    //     .attr("class", "myLine")
-    //     .attr("x1", (d,i) => xScale(d.key))
-    //     .attr("y1", 0)
-    //     .attr("x2", (d,i) => xScale(d.key)) //<<== and here
-    //     .attr("y2", height)
-    //     .style("stroke-width", 1)
-    //     .style("stroke", "palevioletred")
-    //     .style("fill", "none");
-    // Create a vertical line for each release on the date x-axis
  for (var i = 0; i < dateData.length; i++) {
       //console.log(dateData[i].key);
       lines
