@@ -14,7 +14,8 @@ Important links:
 
 * [Design Doc](/DesignDoc.md)
 * DEMO - [Sample static html page with prefetched data for one of the repositories](https://yungene.github.io/) OR see in /static-demo-page/index.html
-* COmmit which identifies the current solution: [091d951a7fea5497ea5a2701b1a54dc338ea7f97](https://github.com/yungene/Visualising-GitHub/commit/091d951a7fea5497ea5a2701b1a54dc338ea7f97)
+* Commit which identifies the current solution: [091d951a7fea5497ea5a2701b1a54dc338ea7f97](https://github.com/yungene/Visualising-GitHub/commit/091d951a7fea5497ea5a2701b1a54dc338ea7f97)
+* [Users followers graph](https://yungene.github.io/users) OR see static in /static-demo-page/users.html
 
 
 ### Task
@@ -24,9 +25,14 @@ Task: _Interrogate the GitHub API to build visualisation of data available that 
 ### Project Information 
 _Note: Please see Design Doc for full description of the project and its development._
 
-The project visualises information about repositories on GitHub. At present, the only metric presented is a line (area) chart of active development team size vs time with releases (tags) also shown on a time axis. This visualisation indents to investigate whether there is correlation between active team size and time with respect to releases. Initial conjecture was that active team size will increase prior to release and will peak at the time of release and will decreases straight after the release. The project consists of three logical parts: data collector, database and website. Website extracts all the processed repositories from the database and presents it to user by means of a drop down menu. Data for the chosen repository will be read from the database and presented to the user as an *interactive* graph. By hovering over the graph, the user can see the exact coordinates of each point and also see the release that this point is working towards. The user can zoom in by brushing on the graph. That is click and drag, and release to zoom in, inversely proportional to the area covered by the movement. Double click to reset the scaling.
+The project visualises information about repositories on GitHub. On the main page, the only metric presented is a line (area) chart of active development team size vs time with releases (tags) also shown on a time axis. (See below for additional network graph). This visualisation indents to investigate whether there is correlation between active team size and time with respect to releases. Initial conjecture was that active team size will increase prior to release and will peak at the time of release and will decreases straight after the release. The project consists of three logical parts: data collector, database and website. Website extracts all the processed repositories from the database and presents it to user by means of a drop down menu. Data for the chosen repository will be read from the database and presented to the user as an *interactive* graph. By hovering over the graph, the user can see the exact coordinates of each point and also see the release that this point is working towards. The user can zoom in by brushing on the graph. That is click and drag, and release to zoom in, inversely proportional to the area covered by the movement. Double click to reset the scaling.
 
-[Demo page.](https://yungene.github.io/) (With sample prefetched data. Original webpage includes a backedn and a database. Should be online and up to date.)
+#### Usage
+Use select box to select the desired reposiroty to be displayed. List is generated based on the data in the database. List names follow this format "repo_owner,repo_name,days_backfill,threshold". See the headings below and title of the graph for the parameters of the current graph. 
+This is a line (area) chart. It has three main components. Y-axis displays the active team size as measured using the metric described in the design doc. X-axis displays the time/date. Thus a change of team size with the respect to time is displayed. Red vertical lines represent individual releases (tags) in that repository. Tags are bound to the time values.
+This graph is *interactive*. Hover over a point to see the exact value as well as the name of the release this commit is conributing to. Name of the release is displayed above the release line. Additionally, brush on the graph to zoom in. Double click to reset the scaling. That is click and drag, and release to zoom in, inversely proportional to the area covered by the movement.
+
+[Demo page.](https://yungene.github.io/) (With sample prefetched data. Original webpage includes a backend and a database. Should be online and up to date.)
 
 Pattern that similar to that described by the conjecture:
 ![Pattern that similar tot he conjecture.](/images/conjecture-pattern.png "Pattern that similar tot he conjecture.")
@@ -34,12 +40,17 @@ Pattern that similar to that described by the conjecture:
 Demonstration of the webpage, including select box, zoom in and cursor:
 ![Demonstration of the webpage, including select box, zoom in and cursor.](/images/demo_select_box_cursor_zoom_in.gif "Demonstration of the webpage, including select box, zoom in and cursor.")
 
-#### Usage
-Use select box to select the desired reposiroty to be displayed. List is generated based on the data in the database. List names follow this format "repo_owner,repo_name,days_backfill,threshold". See the headings below and title of the graph for the parameters of the current graph. 
-This is a line (area) chart. It has three main components. Y-axis displays the active team size as measured using the metric described in the design doc. X-axis displays the time/date. Thus a change of team size with the respect to time is displayed. Red vertical lines represent individual releases (tags) in that repository. Tags are bound to the time values.
-This graph is *interactive*. Hover over a point to see the exact value as well as the name of the release this commit is conributing to. Name of the release is displayed above the release line. Additionally, brush on the graph to zoom in. Double click to reset the scaling. That is click and drag, and release to zoom in, inversely proportional to the area covered by the movement.
+### Followers graph
+As an addition to the main metric described above, I also created a second page /users which presents a followers/followings graph. That is it builds a directed graph with nodes for users and edges for "is followed by" and "is following" relations. It is a Force Directed Graph with Labels. TI created a separated crawler for this. The crwaler does a simple BFS starting from my account.
 
-TODO: Provide examples, screenshots, GIFs
+[Demo page.](https://yungene.github.io/users) (With sample prefetched data. Original webpage includes a backend and a database. Should be online and up to date.)
+
+Screenshot
+![Followers network.](/images/followers-graph.png "Followers network.")
+
+Demonstration of the webpage for graph:
+![Demonstration of the webpage for graph.](/images/followers-network.gif "Demonstration of the webpage for graph.")
+
 
 ### Technologies used
 
@@ -105,7 +116,7 @@ module.exports = config;
 *token*
 
 ```
-- Run the Main.java file. See getRepos() function to see how the repositories to be porcessed are supplied.
+- Run the Main.java file. See getRepos() function to see how the repositories to be porcessed are supplied. For graph, run GraphMain.
 
 #### Website
 ##### Install:
@@ -124,5 +135,6 @@ npm start
 
 ```
 http://localhost:3000
+http://localhost:3000/users
 ```
 

@@ -4,26 +4,20 @@ var router = express.Router();
 const fs = require('fs');
 const d3 = require('d3-node')().d3;
 
-
-var fixtureData = require('../public/sample_data/fixture_data.json');
-var barChartHelper = require('../public/javascripts/bar_chart_helper');
-var sample = require('../public/javascripts/sample');
-var line = require('../public/javascripts/line');
 var repoName = "CS3012"
 
 const path = require("path");
 /* GET home page. */
+/* Retrive a pseudo-random graph.*/
 router.get('/', function(req, res, next) {
   var splitArr = [];
   if (req.app.locals.dropdownVals.length == 0) {
-    splitArr = ["no-input", "no-input",-1,-1];
+    splitArr = ["no-input", "no-input", -1, -1];
   } else {
     splitArr = req.app.locals.dropdownVals[0].split(",");
   }
-  readTeamSizePoints(splitArr[1], splitArr[0],splitArr[2],splitArr[3], function(csvArr) {
+  readTeamSizePoints(splitArr[1], splitArr[0], splitArr[2], splitArr[3], function(csvArr) {
     console.log("Read DB success\n")
-    //console.log("CSVARR")
-    //console.log(csvArr);
     const dataDateVSSize = d3.csvParse(csvArr[0], function(d) {
       return {
         key: new Date(d.key), // lowercase and convert "Year" to Date
@@ -32,8 +26,8 @@ router.get('/', function(req, res, next) {
         threshold: +d.threshold
       };
     });
-    var backfill= "unknown";
-    if(dataDateVSSize[0]){
+    var backfill = "unknown";
+    if (dataDateVSSize[0]) {
       backfill = dataDateVSSize[0].backfill;
     }
 
@@ -61,7 +55,7 @@ String.prototype.format = function() {
 
 router.get('/:repoName', function(req, res, next) {
   var splitArr = req.body.repoName.split(",");
-  readTeamSizePoints(splitArr[1], splitArr[0],splitArr[2],splitArr[3], function(csvArr) {
+  readTeamSizePoints(splitArr[1], splitArr[0], splitArr[2], splitArr[3], function(csvArr) {
     console.log("Read DB success\n")
     res.render('index', {
       title: 'J.C. Demo',
@@ -70,8 +64,8 @@ router.get('/:repoName', function(req, res, next) {
       dataFromNode: csvArr[0],
       dateDataFromNode: csvArr[1],
       dropdownVals: req.app.locals.dropdownVals,
-      backfill:splitArr[2],
-      threshold:splitArr[3]
+      backfill: splitArr[2],
+      threshold: splitArr[3]
     });
   });
 
@@ -81,7 +75,7 @@ router.post("/test/submit", function(req, res, next) {
   repoName = req.body.repoName;
   console.log(repoName);
   var splitArr = req.body.repoName.split(",");
-  readTeamSizePoints(splitArr[1], splitArr[0],splitArr[2],splitArr[3], function(csvArr) {
+  readTeamSizePoints(splitArr[1], splitArr[0], splitArr[2], splitArr[3], function(csvArr) {
     console.log("Read DB success\n")
     res.render('index', {
       title: 'J.C. Demo',
@@ -90,8 +84,8 @@ router.post("/test/submit", function(req, res, next) {
       dataFromNode: csvArr[0],
       dateDataFromNode: csvArr[1],
       dropdownVals: req.app.locals.dropdownVals,
-      backfill:splitArr[2],
-      threshold:splitArr[3]
+      backfill: splitArr[2],
+      threshold: splitArr[3]
     });
   });
 });
@@ -102,7 +96,7 @@ function readTeamSizePoints(stringRepoName, stringRepoOwner, backfillInt, thresh
   if (backfillInt < 0 || thresholdInt < 0) {
     stringQuery1 = "SELECT date, team_size,time_delta,threshold  FROM active_team_size_vs_time WHERE repo_name=\'{0}\' AND repo_owner=\'{1}\' ORDER BY date ASC\n".format(stringRepoName, stringRepoOwner);
   } else {
-    stringQuery1 = "SELECT date, team_size,time_delta,threshold  FROM active_team_size_vs_time WHERE repo_name=\'{0}\' AND repo_owner=\'{1}\' AND time_delta=\'{2}\' AND threshold=\'{3}\' ORDER BY date ASC\n".format(stringRepoName, stringRepoOwner, backfillInt,thresholdInt);
+    stringQuery1 = "SELECT date, team_size,time_delta,threshold  FROM active_team_size_vs_time WHERE repo_name=\'{0}\' AND repo_owner=\'{1}\' AND time_delta=\'{2}\' AND threshold=\'{3}\' ORDER BY date ASC\n".format(stringRepoName, stringRepoOwner, backfillInt, thresholdInt);
   }
   console.log(stringQuery1);
   let stringQuery2 = "SELECT date, release_name FROM release_table WHERE repo_name=\'{0}\' AND repo_owner=\'{1}\' ORDER BY date ASC\n".format(stringRepoName, stringRepoOwner);
@@ -123,7 +117,7 @@ function readTeamSizePoints(stringRepoName, stringRepoOwner, backfillInt, thresh
         var row = result1[i];
         //console.log("row out ");
         // console.log(row);
-        stringCSV1 = stringCSV1.concat("{0},{1},{2},{3}\n".format(row.date, row.team_size, row.time_delta,row.threshold));
+        stringCSV1 = stringCSV1.concat("{0},{1},{2},{3}\n".format(row.date, row.team_size, row.time_delta, row.threshold));
       };
 
       for (var i = 0; i < result2.length; i++) {

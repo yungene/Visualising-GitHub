@@ -23,6 +23,13 @@ import org.eclipse.egit.github.core.service.RepositoryService;
 
 // Consider the last 10 releases
 
+/*
+ * @author Jevgenijus Cistiakovas cistiakj@tcd.ie
+ * This class represents a data collector that gathers information about a particular
+ * repository configuration. In particular, it gather information about release tags and its
+ * dates as well as active team size vs time. This class implements an exponential backoff to
+ * try and eliminate errors due to faulty calls to GitHub API.
+ */
 public class DataCollector {
 	// Input parameters
 	Connection conn;
@@ -36,15 +43,15 @@ public class DataCollector {
 	// Configurations
 	int exponentialBackoffTime = 1;
 	int exponentialBackoffMultiplier = 2;
-	int exponentialBackoffLimit = (int) Math.pow(exponentialBackoffMultiplier, 10);
+	int exponentialBackoffLimit = (int) Math.pow(exponentialBackoffMultiplier, 12);
 	int timeInterval; // days
 	int commitThreshold; // commits
 	int daysToProcess = 400; // days to process
 
+	// Simple class representing info about a contributor.
 	static class Contributor {
 		java.util.Date date;
 		String login;
-
 		public Contributor(Date date, String login) {
 			super();
 			this.date = date;
@@ -64,8 +71,8 @@ public class DataCollector {
 	}
 
 	/*
-	 * Process the repo provided and put all the results into the DB Use a big
-	 * single transaction to ensure atomicity
+	 * Process the repo provided and put all the results into the DB. Use a big
+	 * single transaction to ensure atomicity.
 	 */
 	public boolean process() throws InterruptedException {
 		// Start transaction
@@ -130,6 +137,9 @@ public class DataCollector {
 		return true;
 	}
 
+	/*
+	 * Process release tags of the repository and put them into a DB.
+	 */
 	private boolean processTags(RepositoryService repoService, CommitService commitService, PreparedStatement setTag)
 			throws IOException, SQLException {
 		Repository repoObj = repoService.getRepository(repoOwner, repo);
@@ -155,6 +165,9 @@ public class DataCollector {
 		return true;
 	}
 
+	/*
+	 * Process commits in the repository and calculate active team size vs time metric.
+	 */
 	private boolean processCommits(RepositoryService repoService, CommitService commitService,
 			PreparedStatement setTeamSizeVSTime) throws IOException, SQLException, InterruptedException {
 		// Set up attributes - data structures
@@ -191,8 +204,6 @@ public class DataCollector {
 									new java.sql.Date(addDates(last_date, timeInterval).getTime()));
 							setTeamSizeVSTime.setInt(2, teamSize);
 							setTeamSizeVSTime.executeUpdate();
-//							System.out.printf("Insert team size, date:%s by team size:%s\n",
-//									addDates(last_date, timeInterval), teamSize);
 						}
 						last_date = addDates(last_date, -1);
 					}
@@ -214,12 +225,6 @@ public class DataCollector {
 					}
 					contributorsTable.put(authorName, contributorsTable.get(authorName) + 1);
 					contributorsQueue.add(new Contributor(commitDate, authorName));
-//						pruneContributors(commitDate);
-//						updateTeamSize();
-//						setTeamSizeVSTime.setDate(1, new java.sql.Date(commitDate.getTime()));
-//						setTeamSizeVSTime.setInt(2, teamSize);
-//						setTeamSizeVSTime.executeUpdate();
-//						System.out.printf("Insert tag, date:%s by team size:%s\n", addDates(commitDate, daysToProcess), teamSize);
 				}
 			} catch (NoSuchElementException e) {
 				System.out.printf("Stopped for error  limit:%s\n", limit);
@@ -230,6 +235,9 @@ public class DataCollector {
 		return true;
 	}
 
+	/*
+	 * Helper function to normalize the data structures.
+	 */
 	private void pruneContributors(java.util.Date latestDate) {
 		while (!contributorsQueue.isEmpty()) {
 			Contributor contributor = contributorsQueue.peek();
@@ -242,6 +250,9 @@ public class DataCollector {
 		}
 	}
 
+	/*
+	 * Helper function for adding Java dates.
+	 */
 	private java.util.Date addDates(java.util.Date date, int num) {
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(date);
@@ -249,6 +260,9 @@ public class DataCollector {
 		return calendar.getTime();
 	}
 
+	/*
+	 * Helper function to update the current team size.
+	 */
 	private void updateTeamSize() {
 		int res = 0;
 		for (String contibutor : contributorsTable.keySet()) {
@@ -259,9 +273,11 @@ public class DataCollector {
 		teamSize = res;
 	}
 
+	/*
+	 * Dummy mainline.
+	 */
 	public static void main(String[] args) {
 		System.out.println("Not implemented!!");
 	}
 
-	// private void readInTop
 }
