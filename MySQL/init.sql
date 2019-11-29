@@ -55,3 +55,19 @@ CREATE TABLE IF NOT EXISTS release_table (
 	release_name		VARCHAR(255) NOT NULL,
 	PRIMARY KEY (repo_name, repo_owner, date, release_name)
 );
+
+# Tables for the graph portion
+CREATE TABLE IF NOT EXISTS nodes (
+	node_id				INT UNSIGNED NOT NULL,
+	user_name			VARCHAR(255) NOT NULL,
+	followers			INT UNSIGNED NOT NULL,
+	following			INT UNSIGNED NOT NULL,
+	PRIMARY KEY (node_id)
+);
+
+CREATE TABLE IF NOT EXISTS edges (
+	out_node_id			INT UNSIGNED NOT NULL,
+	in_node_id			INT UNSIGNED NOT NULL,
+	weight				INT NOT NULL DEFAULT 1,
+	PRIMARY KEY (out_node_id,in_node_id)
+);
