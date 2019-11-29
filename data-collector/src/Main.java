@@ -154,7 +154,7 @@ public class Main {
 	 * Read OAuth 2 GitHub token from the predetermined location.
 	 * If fails, then return empty string.
 	 */
-	static private String readToken() {
+	static String readToken() {
 		try {
 			BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream("config/config.txt")));
 			String token = br.readLine();

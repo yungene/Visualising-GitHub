@@ -34,8 +34,8 @@ var margin = {
     bottom: 30,
     left: 40
   },
-  width = 400 - margin.left - margin.right,
-  height = 400 - margin.top - margin.bottom;
+  width = 1400 - margin.left - margin.right,
+  height = 1000 - margin.top - margin.bottom;
 
 const svg1 = d3.select("body").select("#graph").append("svg")
   .attr("width", width)
@@ -49,7 +49,7 @@ var links = graph.edges;
 var nodes = graph.nodes;
 var simulation = d3.forceSimulation()
     .force("link", d3.forceLink().id(function(d) { return d.id; }))
-    .force("charge", d3.forceManyBody())
+    .force("charge", d3.forceManyBody().strength(-300))
     .force("center", d3.forceCenter(width / 2, height / 2));
 
 // Initialize the links
@@ -100,7 +100,7 @@ var lables = node.append("text")
   })
   .attr('x', 6)
   .attr('y', 3)
-  .style("font-size", "8px");
+  .style("font-size", "13px");
 
 node.append("title")
   .text(d => d.name);
