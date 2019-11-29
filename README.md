@@ -14,7 +14,7 @@ Important links:
 
 * [Design Doc](/DesignDoc.md)
 * DEMO - [Sample static html page with prefetched data for one of the repositories](https://yungene.github.io/) OR see in /static-demo-page/index.html
-* Commit which identifies the current solution: [d7498db1876e7f99115340ed7474bc03d414db8c](https://github.com/yungene/Visualising-GitHub/commit/d7498db1876e7f99115340ed7474bc03d414db8c)
+* Commit which identifies the current solution: [6eb9849a272d494a24ada65d33c76fab726afc5a](https://github.com/yungene/Visualising-GitHub/commit/6eb9849a272d494a24ada65d33c76fab726afc5a)
 * Solution prior to followers network: [091d951a7fea5497ea5a2701b1a54dc338ea7f97](https://github.com/yungene/Visualising-GitHub/commit/091d951a7fea5497ea5a2701b1a54dc338ea7f97)
 * [Users followers graph](https://yungene.github.io/users) OR see static in /static-demo-page/users.html
 
