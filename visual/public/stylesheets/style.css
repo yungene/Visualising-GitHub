@@ -1,0 +1,12 @@
+body {
+	background-color: #f5f5f5;
+	font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-size: 12px;
+}
+.svg-chart .background {
+	shape-rendering: crispEdges;
+	stroke: #ccc;
+	fill: #fdfdfd;
+	stroke-width: 1px;
+}
+.svg-chart .bar { fill: #4682B4; }

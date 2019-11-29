@@ -1,0 +1,23 @@
+{
+  "name": "visual",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "dependencies": {
+    "cookie-parser": "~1.4.4",
+    "d3": "^5.12.0",
+    "d3-node": "^2.2.0",
+    "d3node-barchart": "^0.1.1",
+    "d3node-linechart": "^0.1.2",
+    "debug": "~2.6.9",
+    "ejs": "~2.6.1",
+    "express": "~4.16.1",
+    "http-errors": "~1.6.3",
+    "jsdom": "^15.2.1",
+    "json2csv": "^4.5.4",
+    "morgan": "~1.9.1",
+    "mysql": "^2.17.1"
+  }
+}
