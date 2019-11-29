@@ -54,7 +54,7 @@ function readGraph(callBackFun) {
         var edge = {};
         edge.source = +row.u;
         edge.target = +row.v;
-        edge.weight = +row.weight;
+        edge.value = +row.weight;
         graph["edges"].push(edge);
       };
       console.log(JSON.stringify(graph));
