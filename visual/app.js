@@ -37,6 +37,7 @@ db.connect((err) => {
   console.log('Connected to database');
   // read in repos into global array
 });
+// Retrieve the repos processed which are to be presented in a select box.
 app.locals.dropdownVals = [];
 let stringQuery = "SELECT CONCAT(repo_owner,\",\",repo_name,\",\",time_delta,\",\",threshold) as name FROM repos_visited WHERE finished = TRUE;"
 console.log(stringQuery);

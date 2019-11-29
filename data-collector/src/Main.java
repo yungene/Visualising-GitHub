@@ -11,17 +11,21 @@ import java.util.ArrayList;
 import java.util.Calendar;
 
 import org.eclipse.egit.github.core.client.GitHubClient;
-
+/*
+ * @author Jevgenijus Cistiakovas cistiakj@tcd.ie
+ * This is a mainline file. It reads in the GitHub repositories and configurations to be processed, and then
+ * uses DataCollector to process each repository.
+ */
 public class Main {
-	// static PreparedStatement isRepoProcessed;
-	// static PreparedStatement processRepo;
-	// static PreparedStatement insertRepo;
 	static String processRepoSQL = "UPDATE repos_visited " + "SET finished= ? ," + "start_time = ? ,"
 			+ "finish_time = ?" + "WHERE repo_name= ? AND repo_owner= ? AND time_delta= ? AND threshold = ?;";
 	static String isRepoProcessedSQL = "SELECT finished FROM repos_visited "
 			+ "WHERE repo_name= ? AND repo_owner= ? AND time_delta= ? AND threshold = ?;";
 	static String insertRepoSQL = "INSERT INTO repos_visited" + " VALUES(?,?,FALSE,NULL,NULL,?,?);";
 
+	/*
+	 * A simple class representing a configuration to be processed.
+	 */
 	static class Repo {
 		String name;
 		String owner;
@@ -37,7 +41,7 @@ public class Main {
 		}
 	}
 
-	// TODO(cistiakj): process the whole repo simultaneously for differrent parameters to limit the number of calls to GItHub API
+	// TODO(cistiakj): process the whole repo simultaneously for different parameters to limit the number of calls to GItHub API
 	public static void main(String[] args) {
 		Calendar calendar = Calendar.getInstance();
 		GitHubClient client = new GitHubClient().setOAuth2Token(readToken());
@@ -71,6 +75,10 @@ public class Main {
 		}
 	}
 
+	/*
+	 * Retrieves the list of repositories to be processed which are less than the maxSize parameter.
+	 * Repositories are read from the MySQL table. See schema for further information.
+	 */
 	private static ArrayList<Repo> getRepos(Connection conn, int maxSize) throws SQLException {
 		ArrayList<Repo> res = new ArrayList<>();
 		try (Statement getRepo = conn.createStatement();) {
@@ -88,17 +96,12 @@ public class Main {
 			}
 		}
 		return res;
-//		String[][] result = {{"CS3012-SWENG","yungene"},{"jquery","jquery"},
-//				{"jax","google"},
-//				{"filament","google"},
-//				{"Mindustry","Anuken"},
-//				{"gost","ginuerzh"},
-//				{"svelte","sveltejs"},
-//				{"python-for-android","kivy"},
-//				{"coc.nvim","neoclide"}};
-
 	}
 
+	/*
+	 * Returns whether a particular repository configuration has been marked as processed.
+	 * If no entry found, then a inserts a new entry to the table.
+	 */
 	private static boolean processedRepo(Connection conn, String repo, String repoOwner,
 			PreparedStatement isRepoProcessed, PreparedStatement insertRepo, int timeInterval, int threshold)
 			throws SQLException {
@@ -129,6 +132,11 @@ public class Main {
 		return false;
 	}
 
+	/*
+	 * Update the entry in the table to mark the repository configuration as processed.
+	 * Use together with processedRepo() to ensure that the repository configuration is processed twice,
+	 * and that an entry in the table exists.
+	 */
 	private static void markAsProcessed(Connection conn, String repo, String repoOwner, java.util.Date start,
 			java.util.Date finish, PreparedStatement processRepo, int timeInterval, int threshold) throws SQLException {
 		processRepo.setBoolean(1, true);
@@ -142,6 +150,10 @@ public class Main {
 		System.out.printf("Update of repos_visited repo:%s by user:%s\n", repo, repoOwner);
 	}
 
+	/*
+	 * Read OAuth 2 GitHub token from the predetermined location.
+	 * If fails, then return empty string.
+	 */
 	static private String readToken() {
 		try {
 			BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream("config/config.txt")));

@@ -5,6 +5,10 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
+/*
+ * @author Jevgenijus Cistiakovas cistiakj@tcd.ie
+ * This is a helpre class to help with easy creation of a JDBC connection to a MySQL isntance.
+ */
 public class MySQLJDBCUtil {
 	/**
 	 * Get database connection
@@ -15,7 +19,6 @@ public class MySQLJDBCUtil {
 	public static Connection getConnection() throws SQLException {
 		Connection connection = null;
 		try (FileInputStream fs = new FileInputStream("config/dbconfig.properties")) {
-
 			// load the properties file
 			Properties dbProps = new Properties();
 			dbProps.load(fs);
